@@ -8,6 +8,9 @@ class Raw {
 }
 export const raw = s => new Raw(s);
 
+/** A boolean as an attribute value ("true"/"false"); a bare false would render as an empty string. */
+export const tf = v => (v ? 'true' : 'false');
+
 const ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 export const esc = s => String(s).replace(/[&<>"']/g, c => ESC[c]);
 
@@ -118,12 +121,24 @@ export function announce(text) {
   setTimeout(() => { el.textContent = text; }, 30);
 }
 
-export function toast(text) {
+/** A short message at the foot of the screen; with an action (Undo) it stays longer and holds a button. */
+export function toast(text, action = null) {
   const el = document.getElementById('toast');
   if (!el) return;
-  el.textContent = text;
+  el.textContent = '';
+  const span = document.createElement('span');
+  span.textContent = text;
+  el.append(span);
+  if (action) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'toast__action';
+    b.textContent = action.label;
+    b.addEventListener('click', () => { el.hidden = true; action.run(); }, { once: true });
+    el.append(b);
+  }
   el.hidden = false;
   clearTimeout(toast.t);
-  toast.t = setTimeout(() => { el.hidden = true; }, 2600);
-  announce(text);
+  toast.t = setTimeout(() => { if (!el.contains(document.activeElement)) el.hidden = true; }, action ? 7000 : 2600);
+  announce(action ? `${text}. ${action.label} is available.` : text);
 }

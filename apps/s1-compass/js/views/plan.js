@@ -7,6 +7,25 @@ const STATUS_SHORT = {
   not_found_in_checked_official_sources: 'Not located', inaccessible_source: 'Not readable', not_applicable_full_cohort: 'Not standard',
 };
 
+/** Copy text: the clipboard API where allowed (https), else the older selection copy. */
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    const t = document.createElement('textarea');
+    t.value = text;
+    t.setAttribute('readonly', '');
+    t.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none';
+    document.body.append(t);
+    t.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch { ok = false; }
+    t.remove();
+    return ok;
+  }
+}
+
 export function mount(el, ctx) {
   const compare = new Set();
 
@@ -14,7 +33,9 @@ export function mount(el, ctx) {
     const st = ctx.student();
     const choices = ctx.planChoices();
     const keys = ctx.state.plan.choices;
-    const checks = checkPlan(choices, st, ctx.data.affiliations);
+    const available = st.al && st.pg ? ctx.preview()[st.pg]?.ahead ?? null : null;
+    const checks = checkPlan(choices, st, ctx.data.affiliations, { available });
+    const better = ctx.betterGroup();
     const shortlist = ctx.state.plan.shortlist.map(id => ctx.byId.get(id)).filter(Boolean);
     const mode = ctx.state.profile.mode_travel;
     for (const id of [...compare]) if (!shortlist.some(s => s.id === id)) compare.delete(id);
@@ -93,6 +114,10 @@ export function mount(el, ctx) {
               </div>
               <div class="meter__legend t-small">${['ahead', 'mixed', 'behind'].map(b => html`<span><i class="dot dot--${b}"></i>${BAND[b].short}</span>`)}</div>
               <ul class="issues">${checks.map(c => html`<li class="issue issue--${c.level}">${icon(c.level === 'ok' ? 'check' : c.level === 'error' ? 'error' : c.level === 'warn' ? 'warn' : 'info')}<span>${c.text}</span></li>`)}</ul>
+              ${better ? html`<div class="switch-box">
+                <p>With AL ${st.al} you can also choose ${PG_INFO[better.pg].name}, where ${better.ahead} schools had cut-offs less stringent than your score. One group applies to all six, so talk it over with a parent first.</p>
+                <button class="btn btn--primary btn--sm" type="button" data-switch-group="${better.pg}">Switch to ${PG_INFO[better.pg].name}</button>
+              </div>` : ''}
             </div>
             <div class="card tips m-nolift">
               <h2 class="t-card">Before you submit</h2>
@@ -155,13 +180,11 @@ export function mount(el, ctx) {
       return;
     }
     if (e.target.closest('[data-print]')) { window.print(); return; }
+    const sw = e.target.closest('[data-switch-group]');
+    if (sw) { ctx.switchGroup(Number(sw.dataset.switchGroup)); return; }
     if (e.target.closest('[data-copy]')) {
-      try {
-        await navigator.clipboard.writeText(asText());
-        toast('Your list is copied. Paste it into a message or a note.');
-      } catch {
-        toast('Copying is blocked here. Use Print instead.');
-      }
+      if (await copyText(asText())) toast('Your list is copied. Paste it into a message or a note.');
+      else toast('Copying is blocked here. Use Print instead.');
     }
   });
 

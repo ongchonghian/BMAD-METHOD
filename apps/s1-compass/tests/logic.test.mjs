@@ -138,3 +138,33 @@ test('every school has coordinates and every school/year has an O-Level status',
     assert.deepEqual(s.olevel.map(o => o.year), [2024, 2025], s.name);
   }
 });
+
+test('group preview shows what each posting group leads to at AL 22', async () => {
+  const { groupPreview, postingGroups } = await import('../js/logic.js');
+  const st = { al: 22, groups: postingGroups(22), hcl: 'none', gender: 'girl', chinese: 'yes' };
+  const pv = groupPreview(data.schools, st, data.affiliations);
+  assert.equal(pv[3].ahead, 0);
+  assert.ok(pv[2].ahead > 50);
+  assert.equal(pv[3].ipReachable, false);
+  const strong = groupPreview(data.schools, { al: 6, groups: postingGroups(6), hcl: 'none', gender: null, chinese: 'yes' }, data.affiliations);
+  assert.equal(strong[3].ipReachable, true);
+});
+
+test('SAP schools need Chinese; an unanswered question does not rule them out', async () => {
+  const { isSapOk } = await import('../js/logic.js');
+  const sap = data.schools.find(s => s.sap);
+  assert.equal(isSapOk(sap, 'no'), false);
+  assert.equal(isSapOk(sap, 'yes'), true);
+  assert.equal(isSapOk(sap, null), true);
+  assert.equal(isSapOk(byName('Admiralty Secondary School'), 'no'), true);
+});
+
+test('plan checks flag SAP schools without Chinese and a group with no less stringent school', () => {
+  const sap = data.schools.find(s => s.sap && schoolOptions(s, 3).some(o => o.prog === 'SEC'));
+  const choice = { school: sap, option: schoolOptions(sap, 3).find(o => o.prog === 'SEC'), cmp: { band: 'behind' } };
+  const student = { al: 22, pg: 3, hcl: 'none', gender: null, chinese: 'no' };
+  const ids = checkPlan([choice], student, [], { available: 0 }).map(i => `${i.level}:${i.id}`);
+  assert.ok(ids.includes('error:sap'));
+  assert.ok(ids.includes('warn:balance_none'));
+  assert.ok(!ids.includes('warn:balance'));
+});

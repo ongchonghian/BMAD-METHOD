@@ -415,7 +415,7 @@ body { background: var(--bg); padding-bottom: var(--tabbar); }
 .leg__body { display: grid; gap: 2px; }
 .leg--bus .leg__icon, .leg--train .leg__icon { background: var(--ink); color: var(--bg); }
 .line-pill { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; margin-right: 4px; border-radius: 4px; background: var(--ink); color: var(--bg); font: 500 13px/1 var(--font-mono); vertical-align: 1px; }
-@media (max-width: 1023px) { .route { grid-template-columns: 1fr; } .route__map { min-height: 280px; } .route__panel { max-height: none; } }
+@media (max-width: 1023px) { .route { grid-template-columns: minmax(0, 1fr); } .route__map { min-height: 280px; } .route__panel { max-height: none; } }
 
 .match-line { display: inline-flex; gap: var(--s-2); align-items: center; font-weight: 500; }
 .match-line .i { color: var(--band-behind); }
@@ -549,3 +549,44 @@ body { background: var(--bg); padding-bottom: var(--tabbar); }
 .maplibregl-cooperative-gesture-screen { font: 500 var(--t-small)/1.4 var(--font-text); }
 .map-canvas.maplibregl-map { position: absolute; inset: 0; }
 .map-shell, .route, .home-card { overflow: clip; }
+
+/* ------------------------------------------------------------------ walkthrough fixes */
+/* posting group: what each choice leads to */
+.group-facts { display: grid; gap: 2px; margin-top: var(--s-2); padding-top: var(--s-3); border-top: 1px solid var(--line); }
+.group-facts__big { font-weight: 500; }
+.group-facts__big .mono { font-size: 20px; margin-right: 2px; }
+/* score: the subjects still to pick */
+.al-row.is-missing legend { color: var(--band-behind-ink); }
+.al-row.is-missing legend::after { content: " · pick one"; font-weight: 400; }
+.al-row.is-missing .al-opt span.mono { border-color: color-mix(in oklab, var(--band-behind) 60%, transparent); }
+/* switching group */
+.switch-note > div { gap: var(--s-3); justify-items: start; }
+.switch-box { display: grid; gap: var(--s-3); justify-items: start; padding-top: var(--s-4); border-top: 1px solid var(--line); font-size: var(--t-small); }
+/* school page: in my six, as a status beside its own Remove button */
+.in-six { display: inline-flex; align-items: center; gap: var(--s-2); min-height: 44px; font-weight: 500; color: var(--band-ahead-ink); }
+/* toast with an Undo button */
+.toast { display: inline-flex; align-items: center; gap: var(--s-4); }
+.toast__action { min-height: 36px; padding: 0 var(--s-3); border: 1px solid color-mix(in oklab, var(--bg) 40%, transparent); border-radius: var(--r-sm);
+  background: transparent; color: var(--bg); font: 500 var(--t-small) var(--font-text); cursor: pointer; }
+.toast__action:hover { background: color-mix(in oklab, var(--bg) 14%, transparent); }
+/* school list: view switch and filter button first; filters fold away on small screens */
+.explore-bar { display: none; }
+.explore-tools { display: flex; flex-wrap: wrap; gap: var(--s-3); align-items: center; }
+.explore-tools > .toolbar { flex: 1 1 auto; }
+.explore-map { scroll-margin-top: calc(var(--nav) + var(--s-3)); }
+@media (max-width: 1023px) {
+  .explore-bar { display: flex; flex-wrap: wrap; gap: var(--s-2); align-items: center; }
+  .explore-bar .seg--view { display: inline-flex; }
+  .explore-head > .seg--view { display: none; }
+  .filters-toggle .i { width: 16px; height: 16px; }
+  .explore-tools { display: grid; }
+  .explore-tools > .search { order: 2; }
+  .filters-toggle[aria-expanded="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .explore-tools .search { max-width: none; }
+  .toolbar[data-open="false"] { display: none; }
+  .toolbar[data-open="true"] { padding: var(--s-4); border: 1px solid var(--line); border-radius: var(--r-md); background: var(--bg); }
+}
+
+/* long button labels wrap inside narrow panels instead of running past them */
+.route__panel { min-width: 0; }
+.route__panel > .btn { max-width: 100%; height: auto; min-height: var(--btn-h); padding-block: var(--s-2); white-space: normal; text-align: center; line-height: 1.3; }

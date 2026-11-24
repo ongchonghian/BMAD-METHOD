@@ -24,7 +24,7 @@ export function mount(el, ctx) {
         <div class="hero-copy span-6">
           <p class="hero-notice">For Primary 6 students choosing schools for <strong>${d.planningIntakeYear}</strong></p>
           <h1 id="hero-h">Plan your six secondary school choices</h1>
-          <p class="t-lead">Start from your PSLE score. See how it compares with each school’s 2024 and 2025 cut-offs, how long the trip from home takes, and what you could do there. Then put your six in an order you can explain.</p>
+          <p class="t-lead">Start from your PSLE score. See how it compares with each school’s 2024 and 2025 cut-offs, how far each school is from home, and what you could do there. Then put your six in an order you can explain.</p>
           <div class="btn-row">
             ${started
               ? html`<a class="btn btn--primary" href="#/explore">See my schools${arrow}</a><a class="btn btn--secondary" href="#/setup/1">Change my details</a>`
@@ -61,7 +61,9 @@ export function mount(el, ctx) {
       <ol class="grid steps">
         ${[
           ['1', 'Your score', 'Enter your subject results. The app works out your total and your posting group, and asks you to choose when your score allows two.'],
-          ['2', 'Your home', 'Search your address or postal code. Travel times are for a school morning, arriving by 7:15, by bus and train.'],
+          ['2', 'Your home', ctx.canRoute()
+            ? 'Search your address or postal code. Travel times are for a school morning, arriving by 7:15, by bus and train.'
+            : 'Search your address or postal code. See how far each school is, and open the way there in Google Maps.'],
           ['3', 'What you enjoy', 'Pick the things you like doing. Schools show the programmes and CCAs that match them.'],
           ['4', 'Your six', 'Order up to six choices by where you most want to go. The app checks the posting rules and the balance of your list.'],
         ].map(([n, t, p]) => html`<li class="card step span-3 m-nolift"><span class="step__n mono">${n}</span><h3>${t}</h3><p>${p}</p></li>`)}

@@ -1,10 +1,10 @@
-import { html, icon, arrow } from '../ui.js';
-import { INTERESTS, PG_INFO, totalAL, postingGroups } from '../logic.js';
+import { html, tf, icon, arrow } from '../ui.js';
+import { INTERESTS, PG_INFO, totalAL, HCL_PRIORITY_MAX_AL } from '../logic.js';
 import { plotSvg } from '../plot.js';
 import * as maps from '../maps.js';
 import { openMap } from '../mapview.js';
 
-const STEPS = ['Your score', 'Posting group', 'About you', 'Your home', 'What you enjoy'];
+const STEPS = ['Your score', 'About you', 'Posting group', 'Your home', 'What you enjoy'];
 const SUBJECTS = [['el', 'English'], ['math', 'Mathematics'], ['sci', 'Science'], ['mt', 'Mother Tongue']];
 const LIMITS = [30, 45, 60, 75, 0];
 const HCL = [['D', 'Distinction'], ['M', 'Merit'], ['P', 'Pass'], ['none', 'Did not take it or did not pass'], ['unknown', 'Not sure']];
@@ -27,7 +27,7 @@ export function mount(el, ctx, [n]) {
           <ol class="progress" aria-hidden="true">${STEPS.map((_, i) => html`<li class="${i < step ? 'is-done' : ''}"></li>`)}</ol>
         </div>
         <form class="setup__form" novalidate>
-          ${[stepScore, stepGroup, stepAbout, stepHome, stepInterests][step - 1](p, st, ctx)}
+          ${[stepScore, stepAbout, stepGroup, stepHome, stepInterests][step - 1](p, st, ctx)}
           <div class="setup__actions">
             <a class="btn btn--secondary" href="${step === 1 ? '#/' : `#/setup/${step - 1}`}">Back</a>
             ${step === 4 && !p.home ? html`<a class="btn btn--secondary" href="#/setup/5">Skip for now</a>` : ''}
@@ -76,7 +76,8 @@ export function mount(el, ctx, [n]) {
     if (['mode', 'chinese', 'total'].includes(t.name) || t.name.startsWith('sub-')) {
       const focusName = t.name, focusValue = t.value;
       render();
-      el.querySelector(`[name="${focusName}"][value="${CSS.escape(focusValue)}"], [name="${focusName}"]:not([type="radio"])`)?.focus();
+      el.querySelector(`[name="${focusName}"][value="${CSS.escape(focusValue)}"], [name="${focusName}"]:not([type="radio"])`)?.focus({ preventScroll: true });
+      if (t.name.startsWith('sub-') && ctx.student().al) el.querySelector('.score-card')?.scrollIntoView({ block: 'nearest' });
     }
     if (t.name === 'travelmode' && p.home) ctx.refreshTravel();
   });
@@ -143,11 +144,20 @@ export function mount(el, ctx, [n]) {
     const st = ctx.student();
     const p = ctx.state.profile;
     if (step === 1) {
-      if (p.mode === 'subjects' && totalAL(p.subjects) == null) return 'Pick a result for each of the four subjects.';
+      if (p.mode === 'subjects' && totalAL(p.subjects) == null) {
+        const missing = SUBJECTS.filter(([k]) => !p.subjects[k]);
+        for (const [k] of missing) {
+          const row = el.querySelector(`input[name="sub-${k}"]`)?.closest('.al-row');
+          row?.classList.add('is-missing');
+          row?.setAttribute('aria-invalid', 'true');
+        }
+        const names = missing.map(([, l]) => l);
+        return `Pick a result for ${names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names.at(-1)}` : names[0]}.`;
+      }
       if (p.mode === 'total' && !st.groups.valid) return 'Write a total between 4 and 30.';
     }
-    if (step === 2 && st.groups.choose && !st.pg) return 'Choose one posting group for all your choices.';
-    if (step === 3 && p.chinese == null) return 'Say whether you took Chinese at PSLE, so SAP schools compare correctly.';
+    if (step === 3 && st.groups.choose && !st.pg) return 'Choose one posting group for all your choices.';
+    if (step === 2 && p.chinese == null) return 'Say whether you took Chinese at PSLE. SAP schools need it.';
     return null;
   }
 
@@ -172,7 +182,7 @@ export function mount(el, ctx, [n]) {
     const input = el.querySelector('[name="home-q"]');
     if (!list) return;
     list.innerHTML = String(html`${results.map((r, i) => html`
-      <li id="home-opt-${i}" role="option" class="combo__opt ${i === active ? 'is-active' : ''}" aria-selected="${i === active}" data-result="${i}">
+      <li id="home-opt-${i}" role="option" class="combo__opt ${i === active ? 'is-active' : ''}" aria-selected="${tf(i === active)}" data-result="${i}">
         ${icon('pin')}<span><strong>${r.main}</strong><span class="t-small muted">${r.secondary}</span></span>
       </li>`)}`);
     list.hidden = !results.length;
@@ -243,8 +253,21 @@ function stepScore(p, st) {
     ${stepError}`;
 }
 
-function stepGroup(p, st) {
+/** What a group leads to, in words a 12-year-old can weigh. */
+function groupFacts(n, st, pv) {
+  const c = pv[n];
+  if (!c) return '';
+  return html`<span class="group-facts">
+    <span class="group-facts__big"><strong class="mono">${c.ahead}</strong> ${c.ahead === 1 ? 'school' : 'schools'} had cut-offs less stringent than AL ${st.al} in both 2024 and 2025</span>
+    <span class="t-small muted">${c.mixed} close, ${c.behind} stricter${c.none ? `, ${c.none} with no cut-off to compare` : ''}</span>
+  </span>`;
+}
+
+const ipLine = (n, pv) => (n === 3 && pv[3]?.ipReachable ? html`<span>You can also choose the Integrated Programme (IP), six years to the A-Level or IB.</span>` : '');
+
+function stepGroup(p, st, ctx) {
   const g = st.groups;
+  const pv = g.valid && g.groups.length ? ctx.preview() : {};
   const header = html`<h1>Your posting group</h1>
     <p class="t-lead measure">Your score sets the group you are posted in. The group decides the level you start most subjects at, and which past cut-offs you are compared with.</p>`;
   if (!g.valid) return html`${header}<div class="note note--warn">${icon('warn')}<p>Go back and enter your score first.</p></div>${stepError}`;
@@ -262,14 +285,16 @@ function stepGroup(p, st) {
           <input type="radio" name="pg" value="${n}" ${st.pg === n ? 'checked' : ''}>
           <span class="choice-card__title">${PG_INFO[n].name}</span>
           <span>${PG_INFO[n].text}</span>
+          ${ipLine(n, pv)}
+          ${groupFacts(n, st, pv)}
         </label>`)}
       </fieldset>
-      <p class="t-small muted measure">Not sure? Choosing the higher group means more demanding lessons and stricter cut-offs; the lower one usually opens more schools. Talk it over with a parent or your teacher.</p>
+      <p class="t-small muted measure">MOE suggests listing two or three schools whose past cut-offs were less stringent than your score, so a group with more of them gives you safer choices. Talk it over with a parent or your teacher.</p>
       ${stepError}`;
   }
   const n = g.groups[0];
   return html`${header}
-    <div class="choice-card is-static"><span class="choice-card__title">${PG_INFO[n].name}</span><span>${PG_INFO[n].text}</span></div>
+    <div class="choice-card is-static"><span class="choice-card__title">${PG_INFO[n].name}</span><span>${PG_INFO[n].text}</span>${ipLine(n, pv)}${groupFacts(n, st, pv)}</div>
     ${g.condition === 'unknown' ? html`<div class="note">${icon('info')}<p>Posting Group 1 at AL 26 to 30 needs AL 7 or better in both English and Mathematics. Enter each subject in step 1 to check.</p></div>` : ''}
     ${stepError}`;
 }
@@ -296,12 +321,13 @@ function stepAbout(p, st, ctx) {
     </div>
     <fieldset class="field-group">
       <legend>Did you take Chinese at PSLE?</legend>
+      <p class="t-small muted">SAP schools, which teach Chinese at a high level, need it.</p>
       <div class="chips">
         ${[['yes', 'Yes'], ['no', 'No']].map(([v, l]) => html`
           <label class="chip"><input type="radio" name="chinese" value="${v}" ${p.chinese === v ? 'checked' : ''}><span>${l}</span></label>`)}
       </div>
     </fieldset>
-    ${p.chinese === 'yes' ? html`
+    ${p.chinese === 'yes' && (st.al == null || st.al <= HCL_PRIORITY_MAX_AL) ? html`
     <fieldset class="field-group">
       <legend>Your Higher Chinese result</legend>
       <p class="t-small muted">At SAP schools, a Higher Chinese grade can decide between students with the same score of 14 or better.</p>
@@ -312,11 +338,14 @@ function stepAbout(p, st, ctx) {
     ${stepError}`;
 }
 
-function stepHome(p) {
+function stepHome(p, st, ctx) {
   const status = maps.mapsStatus();
+  const routes = ctx.canRoute();
   return html`
     <h1>Where do you live?</h1>
-    <p class="t-lead measure">You will make this trip every school day. We use it to work out travel times and to plan the route.</p>
+    <p class="t-lead measure">You will make this trip every school day. ${routes
+      ? 'We use it to work out travel times and to plan the route.'
+      : 'We use it to show how far each school is, and to open the route in Google Maps.'}</p>
     ${p.home
       ? html`<div class="home-card" data-home-card tabindex="-1">
           <div class="home-card__map" data-home-map></div>
@@ -337,7 +366,7 @@ function stepHome(p) {
           <p id="home-status" class="t-small muted" data-home-status role="status">${status === 'none' ? 'Searching with OneMap, Singapore’s public map.' : ''}</p>
           <button class="btn btn--secondary btn--sm locate" type="button" data-locate>${icon('locate')}Use my current location</button>
         </div>`}
-    <fieldset class="field-group">
+    ${routes ? html`    <fieldset class="field-group">
       <legend>How do you usually travel?</legend>
       <div class="chips">
         ${[['TRANSIT', 'Bus and train'], ['DRIVING', 'Car']].map(([v, l]) => html`
@@ -350,7 +379,8 @@ function stepHome(p) {
         ${LIMITS.map(v => html`<label class="chip"><input type="radio" name="limit" value="${v}" ${p.maxMinutes === v ? 'checked' : ''}><span>${v ? `${v} min` : 'No limit'}</span></label>`)}
       </div>
     </fieldset>
-    <p class="t-small muted measure">Your home stays in this browser. ${status === 'none' ? '' : 'It is sent to Google Maps only to work out routes.'}</p>
+` : ''}
+    <p class="t-small muted measure">Your home stays in this browser. ${routes ? `It is sent to ${status === 'none' ? 'OneMap' : 'Google Maps'} only to work out routes.` : ''}</p>
     ${stepError}`;
 }
 

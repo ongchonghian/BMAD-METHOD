@@ -28,7 +28,7 @@ export const ctx = {
     const al = p.mode === 'subjects' ? L.totalAL(p.subjects) : p.total;
     const groups = L.postingGroups(al, p.mode === 'subjects' ? p.subjects.el : null, p.mode === 'subjects' ? p.subjects.math : null);
     const pg = groups.groups.includes(p.pg) ? p.pg : groups.groups.length === 1 ? groups.groups[0] : null;
-    return { al, pg, groups, hcl: p.chinese === 'yes' ? p.hcl : 'none', gender: p.gender, primaryId: p.primaryId, home: p.home, interests: p.interests };
+    return { al, pg, groups, chinese: p.chinese, hcl: p.chinese === 'yes' ? p.hcl : 'none', gender: p.gender, primaryId: p.primaryId, home: p.home, interests: p.interests };
   },
 
   /** [{ school, option, cmp }] for one school, for the current student. */
@@ -60,8 +60,41 @@ export const ctx = {
     toast(`Added to your six (${state.plan.choices.length} of 6)`);
   },
   removeChoice(key) {
+    const at = state.plan.choices.indexOf(key);
+    if (at < 0) return;
     update(s => { s.plan.choices = s.plan.choices.filter(k => k !== key); });
-    toast('Removed from your six');
+    toast('Removed from your six', {
+      label: 'Undo',
+      run: () => update(s => { if (!s.plan.choices.includes(key)) s.plan.choices.splice(Math.min(at, s.plan.choices.length), 0, key); }),
+    });
+  },
+
+  /** True when trips can be planned here (Google Maps in use, or OneMap routing set up); else only distances. */
+  canRoute() {
+    const g = maps.mapsStatus();
+    return (g !== 'none' && g !== 'failed') || onemap.routingAvailable();
+  },
+
+  /** What each posting group the score allows would lead to (cached per profile). */
+  preview() {
+    const st = ctx.student();
+    const key = JSON.stringify([st.al, st.groups.groups, st.gender, st.chinese, st.hcl, st.primaryId]);
+    if (ctx._preview?.key !== key) ctx._preview = { key, value: L.groupPreview(ctx.data.schools, st, ctx.data.affiliations) };
+    return ctx._preview.value;
+  },
+
+  /** The other posting group, when the score allows a choice and it has choices less stringent than the score. */
+  betterGroup() {
+    const st = ctx.student();
+    if (!st.groups.choose || !st.pg) return null;
+    const pv = ctx.preview();
+    const other = st.groups.groups.find(g => g !== st.pg);
+    return pv[st.pg].ahead === 0 && pv[other]?.ahead > 0 ? { pg: other, ahead: pv[other].ahead } : null;
+  },
+
+  switchGroup(pg) {
+    update(s => { s.profile.pg = pg; s.ui.filters.band = 'all'; });
+    toast(`Switched to Posting Group ${pg}`);
   },
   moveChoice(key, delta) {
     update(s => {

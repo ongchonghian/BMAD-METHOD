@@ -1,5 +1,5 @@
-import { html, icon, bandBadge, travelChip, schoolTags, GENDER_LABEL } from '../ui.js';
-import { BAND, INTEREST_LABEL, PG_INFO, copText, interestMatches, ccaMatchesInterest, googleMapsDirUrl, formatMinutes, distanceKm, isGenderOk, nextSchoolMorning } from '../logic.js';
+import { html, tf, icon, bandBadge, travelChip, schoolTags, GENDER_LABEL } from '../ui.js';
+import { BAND, INTEREST_LABEL, PG_INFO, copText, interestMatches, ccaMatchesInterest, googleMapsDirUrl, formatMinutes, distanceKm, isGenderOk, isSapOk, nextSchoolMorning } from '../logic.js';
 import * as maps from '../maps.js';
 import * as onemap from '../onemap.js';
 import { openMap, matches } from '../mapview.js';
@@ -35,6 +35,7 @@ export function mount(el, ctx, [id]) {
     const choices = ctx.state.plan.choices;
     const t = ctx.travelFor(s.id);
     const genderOk = isGenderOk(s, st.gender);
+    const sapOk = isSapOk(s, st.chinese);
 
     el.innerHTML = String(html`
     <div class="page page--school">
@@ -49,11 +50,13 @@ export function mount(el, ctx, [id]) {
           </div>
           <div class="school-head__actions">
             ${!genderOk ? html`<p class="note note--warn">${icon('warn')}<span>This is a ${GENDER_LABEL[s.gender].toLowerCase()}’ school.</span></p>` : ''}
-            ${s.ordinary && opts.length && genderOk ? html`<div class="btn-row">${opts.map(o => choices.includes(o.option.key)
-              ? html`<button class="btn btn--secondary" type="button" data-remove="${o.option.key}">${icon('check')}In my six${opts.length > 1 ? ` (${o.option.prog})` : ''} · #${choices.indexOf(o.option.key) + 1}</button>`
+            ${!sapOk ? html`<p class="note note--warn">${icon('warn')}<span>This is a SAP school. It needs Chinese at PSLE, and you said you did not take it.</span></p>` : ''}
+            ${s.ordinary && opts.length && genderOk && sapOk ? html`<div class="btn-row">${opts.map(o => choices.includes(o.option.key)
+              ? html`<p class="in-six">${icon('check')}<span>Choice #${choices.indexOf(o.option.key) + 1} in your six${opts.length > 1 ? ` (${o.option.prog})` : ''}</span></p>
+                 <button class="btn btn--secondary" type="button" data-remove="${o.option.key}">Remove${opts.length > 1 ? ` ${o.option.prog}` : ''} from my six</button>`
               : html`<button class="btn btn--primary" type="button" data-add="${o.option.key}">${icon('plus')}Add ${opts.length > 1 ? o.option.prog : 'to my six'}</button>`)}</div>` : ''}
             <div class="btn-row">
-              <button class="btn btn--secondary" type="button" data-save aria-pressed="${saved}">${icon('star')}${saved ? 'Saved to shortlist' : 'Save to shortlist'}</button>
+              <button class="btn btn--secondary" type="button" data-save aria-pressed="${tf(saved)}">${icon('star')}${saved ? 'Saved to shortlist' : 'Save to shortlist'}</button>
             </div>
           </div>
         </header>
@@ -164,9 +167,15 @@ export function mount(el, ctx, [id]) {
         <div class="scale__you" style="--x:${(Math.min(Math.max(st.al, 4), 30) - 4) / 26}"><span class="mono">You ${st.al}</span></div>
       </div>
       <ul class="year-notes">${years.map(y => html`<li><strong class="mono">${y}</strong> ${yearText(o.cmp.years[y], st)}</li>`)}</ul>
-      ${o.cmp.buffer != null ? html`<p class="t-small"><strong class="mono">${o.cmp.buffer > 0 ? '+' : ''}${o.cmp.buffer}</strong> against the stricter of the two cut-offs.</p>` : ''}
+      ${o.cmp.buffer != null ? html`<p class="t-small">${marginText(o.cmp.buffer)}</p>` : ''}
       ${o.cmp.affiliated ? html`<p class="note note--inline">${icon('info')}<span>You are compared with the cut-off for affiliated students. It applies only if this school is your first choice.</span></p>` : ''}
     </div>`;
+  }
+
+  function marginText(b) {
+    if (b > 0) return `Your score was ${b} better than the stricter of the two cut-offs.`;
+    if (b === 0) return 'Your score was the same as the stricter of the two cut-offs.';
+    return `The stricter cut-off was ${-b} better than your score.`;
   }
 
   function scaleLabel(o, st) {
@@ -178,7 +187,7 @@ export function mount(el, ctx, [id]) {
     const r = y.rec;
     switch (y.result) {
       case 'better': return y.hclDecided ? `Your score equals the cut-off (${copText(r)}), and your Higher Chinese grade comes first.` : `Cut-off ${copText(r)}. Your ${st.al} was ${r.cop - st.al} better.`;
-      case 'tie': return `Cut-off ${copText(r)}, the same as your score. Ties are settled by citizenship, choice order and a ballot.${y.hclUnknown ? ' Your Higher Chinese grade could decide it: add it in your details.' : ''}`;
+      case 'tie': return `Cut-off ${copText(r)}, the same as your score. In a tie, Singapore citizens come first, then students who put this school higher in their list, then a computer ballot. So where you put it in your six matters.${y.hclUnknown ? ' Your Higher Chinese grade could decide it: add it in your details.' : ''}`;
       case 'worse': return y.hclDecided ? `Your score equals the cut-off (${copText(r)}), but students with a better Higher Chinese grade came first.` : `Cut-off ${copText(r)}, ${st.al - r.cop} stricter than your score.`;
       case 'open': return `Places were left after posting (${copText(r)}), so students who chose it in this group were posted.`;
       case 'none_posted': return 'No students were posted in this group that year.';
@@ -225,22 +234,22 @@ export function mount(el, ctx, [id]) {
     return html`${head}<div class="route">
       <div class="route__map" data-route-map></div>
       <div class="route__panel">
-        <div class="route__controls">
+        ${mapsOn ? html`<div class="route__controls">
           <fieldset class="seg seg--sm">
             <legend class="sr-only">Travel by</legend>
             ${Object.entries(maps.MODES).map(([k, m]) => html`<label><input type="radio" name="rmode" value="${k}" ${routeState.mode === k ? 'checked' : ''}><span>${icon(k === 'TRANSIT' ? 'bus' : k === 'DRIVING' ? 'car' : 'walk')}${m.label}</span></label>`)}
           </fieldset>
-          ${mapsOn ? html`<div class="field field--inline"><label for="arrive">Arrive by</label>
-            <select id="arrive" name="arrive">${ARRIVE.map(([h, m], i) => html`<option value="${i}" ${routeState.arrive === i ? 'selected' : ''}>${h}:${String(m).padStart(2, '0')} am</option>`)}</select></div>` : ''}
-        </div>
+          <div class="field field--inline"><label for="arrive">Arrive by</label>
+            <select id="arrive" name="arrive">${ARRIVE.map(([h, m], i) => html`<option value="${i}" ${routeState.arrive === i ? 'selected' : ''}>${h}:${String(m).padStart(2, '0')} am</option>`)}</select></div>
+        </div>` : ''}
         ${!mapsOn
           ? html`<p class="route__big"><span class="mono">${km} km</span> <span class="muted">in a straight line from ${p.home.label}</span></p>
-                 <p class="t-small muted measure">${maps.mapsStatus() === 'failed' ? 'Google Maps refused the key, so the route opens in Google Maps instead.' : html`The dashed line is the straight-line distance. Google Maps shows the real route. <button class="inline-link" type="button" data-open-settings>Add a OneMap token</button> to see it here with each bus and train.`}</p>`
+                 <p class="t-small muted measure">The dashed line shows how far it is in a straight line. Google Maps shows which buses and trains to take, and how long the trip is.</p>`
           : routeState.loading ? html`<p class="t-small muted" role="status">Planning the route…</p>`
           : routeState.error ? html`<p class="note note--warn">${icon('warn')}<span>${routeState.error}</span></p>`
           : r ? routeView(r) : ''}
         ${router() === 'onemap' && r ? html`<p class="t-small muted">Route from <a class="inline-link" href="https://www.onemap.gov.sg" target="_blank" rel="noopener">OneMap</a>, Singapore Land Authority.</p>` : ''}
-        <a class="btn btn--secondary" href="${url}" target="_blank" rel="noopener">Open in Google Maps${icon('out')}</a>
+        <a class="btn ${mapsOn ? 'btn--secondary' : 'btn--primary'}" href="${url}" target="_blank" rel="noopener">${mapsOn ? 'Open in Google Maps' : 'See the way there in Google Maps'}${icon('out')}</a>
       </div>
     </div>`;
   }
@@ -248,7 +257,7 @@ export function mount(el, ctx, [id]) {
   function routeView(r) {
     const all = routeState.result.routes;
     return html`
-      ${all.length > 1 ? html`<div class="route__alts" role="group" aria-label="Other routes">${all.map((x, i) => html`<button type="button" class="alt ${i === routeState.idx ? 'is-on' : ''}" aria-pressed="${i === routeState.idx}" data-alt="${i}"><span class="mono">${formatMinutes(x.minutes)}</span><span class="t-small muted">${x.steps.filter(st => st.kind === 'bus' || st.kind === 'train').map(st => st.line).join(' › ') || x.summary || 'Route'}</span></button>`)}</div>` : ''}
+      ${all.length > 1 ? html`<div class="route__alts" role="group" aria-label="Other routes">${all.map((x, i) => html`<button type="button" class="alt ${i === routeState.idx ? 'is-on' : ''}" aria-pressed="${tf(i === routeState.idx)}" data-alt="${i}"><span class="mono">${formatMinutes(x.minutes)}</span><span class="t-small muted">${x.steps.filter(st => st.kind === 'bus' || st.kind === 'train').map(st => st.line).join(' › ') || x.summary || 'Route'}</span></button>`)}</div>` : ''}
       <p class="route__big"><span class="mono">${formatMinutes(r.minutes)}</span>${r.depart ? html` <span class="muted">leave ${r.depart}, arrive ${r.arrive}</span>` : html` <span class="muted">${r.distanceKm} km</span>`}</p>
       <ol class="steps-list">${r.steps.map(st => html`<li class="leg leg--${st.kind}">
         ${st.kind === 'bus' || st.kind === 'train'

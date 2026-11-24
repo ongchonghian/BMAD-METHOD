@@ -82,12 +82,39 @@ export function postingGroups(al, el = null, math = null) {
 }
 
 export const PG_INFO = {
-  3: { name: 'Posting Group 3', level: 'G3', text: 'You start most subjects at G3, the most demanding level. You can also choose the Integrated Programme (IP).' },
+  3: { name: 'Posting Group 3', level: 'G3', text: 'You start most subjects at G3, the most demanding level.' },
   2: { name: 'Posting Group 2', level: 'G2', text: 'You start most subjects at G2. You can take some subjects at G3 if you did well in them.' },
   1: { name: 'Posting Group 1', level: 'G1', text: 'You start most subjects at G1, with smaller steps and more support. You can take some subjects at G2 or G3.' },
 };
 
 // ------------------------------------------------------------------ schools and choices
+
+/** SAP schools need Chinese (or Higher Chinese) at PSLE. Unknown counts as fine; only a clear "no" rules them out. */
+export function isSapOk(school, chinese) {
+  return !school.sap || chinese !== 'no';
+}
+
+/** Whether a student could list this school at all: gender and SAP language. */
+export function isEligible(school, student) {
+  return isGenderOk(school, student.gender) && isSapOk(school, student.chinese);
+}
+
+/**
+ * What each posting group a score allows would lead to: counts of choices by band, and whether any
+ * IP choice is within reach (not stricter in both years). { [pg]: { ahead, mixed, behind, none, ipReachable } }
+ */
+export function groupPreview(schools, student, affiliations = []) {
+  const out = {};
+  for (const pg of student.groups?.groups || [student.pg]) {
+    const counts = { ahead: 0, mixed: 0, behind: 0, none: 0, ipReachable: false };
+    for (const c of allChoices(schools.filter(s => isEligible(s, student)), { ...student, pg }, affiliations)) {
+      counts[c.cmp.band] += 1;
+      if (c.option.prog === 'IP' && c.cmp.band !== 'behind' && c.cmp.band !== 'none') counts.ipReachable = true;
+    }
+    out[pg] = counts;
+  }
+  return out;
+}
 
 export function isGenderOk(school, gender) {
   if (!gender || school.gender === 'coed') return true;
@@ -188,7 +215,7 @@ export function allChoices(schools, student, affiliations) {
  * choices: [{ school, option, cmp }] in the student's order. Returns [{ level, id, text }].
  * level: error (breaks a rule), warn (worth fixing), ok, info.
  */
-export function checkPlan(choices, student, affiliations = []) {
+export function checkPlan(choices, student, affiliations = [], { available = null } = {}) {
   const out = [];
   const n = choices.length;
   if (n === 0) {
@@ -206,6 +233,9 @@ export function checkPlan(choices, student, affiliations = []) {
   for (const c of choices) {
     if (!isGenderOk(c.school, student.gender)) {
       out.push({ level: 'error', id: 'gender', text: `${c.school.name} is a ${c.school.gender === 'boys' ? "boys'" : "girls'"} school.` });
+    }
+    if (!isSapOk(c.school, student.chinese)) {
+      out.push({ level: 'error', id: 'sap', text: `${c.school.name} is a SAP school, which needs Chinese at PSLE.` });
     }
     if (c.option.route !== 'IP' && c.option.route !== `PG${student.pg}`) {
       out.push({ level: 'error', id: 'posting_group', text: `${c.school.name} was added for a different posting group. Remove it and add it again.` });
@@ -226,7 +256,9 @@ export function checkPlan(choices, student, affiliations = []) {
 
   const ahead = choices.filter(c => c.cmp.band === 'ahead').length;
   const behind = choices.filter(c => c.cmp.band === 'behind').length;
-  if (ahead >= 2) {
+  if (available === 0) {
+    out.push({ level: 'warn', id: 'balance_none', text: `No school had past cut-offs less stringent than AL ${student.al} in Posting Group ${student.pg}, so every choice is a stretch.` });
+  } else if (ahead >= 2) {
     out.push({ level: 'ok', id: 'balance', text: `${ahead} of your choices had past cut-offs less stringent than your score. MOE suggests two or three.` });
   } else {
     out.push({ level: 'warn', id: 'balance', text: `${ahead === 0 ? 'None' : 'Only one'} of your choices had past cut-offs less stringent than your score. MOE suggests including two or three.` });
