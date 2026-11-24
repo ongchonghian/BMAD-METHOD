@@ -88,8 +88,8 @@ better. None of this is a chance of getting in, and the app says so where the ba
 - **Summary first, detail on demand.** The list row answers: can I, how far, what's there for me. The school page
   holds the rest.
 - **Travel is real.** Times are public transport on a school morning, arriving by 7:15, from Google Maps.
-  Without a Maps key the app still works on the open MapLibre map: straight-line distance, and every route
-  opens in Google Maps.
+  Without a Maps key the app uses the open MapLibre map, with bus and train routes and trip times from OneMap
+  when OneMap routing is set up, and straight-line distance when it is not. Every route also opens in Google Maps.
 - **Strategy, not sorting.** The six are ordered by preference. The app checks the balance and the rules and
   explains them; it never re-sorts the list by cut-off.
 - **Reachable for everyone.** Works by keyboard and screen reader; 44px targets; reduced motion respected;

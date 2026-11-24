@@ -1,6 +1,7 @@
 import { html, icon, bandBadge, travelChip, schoolTags, GENDER_LABEL } from '../ui.js';
-import { BAND, INTEREST_LABEL, PG_INFO, copText, interestMatches, ccaMatchesInterest, googleMapsDirUrl, formatMinutes, distanceKm, isGenderOk } from '../logic.js';
+import { BAND, INTEREST_LABEL, PG_INFO, copText, interestMatches, ccaMatchesInterest, googleMapsDirUrl, formatMinutes, distanceKm, isGenderOk, nextSchoolMorning } from '../logic.js';
 import * as maps from '../maps.js';
+import * as onemap from '../onemap.js';
 import { openMap, matches } from '../mapview.js';
 import { footer } from './start.js';
 
@@ -200,9 +201,16 @@ export function mount(el, ctx, [id]) {
 
   // ---------------------------------------------------------------- travel
 
+  /** Who plans the route: Google with a Google map, OneMap with the open map, or nobody (straight line). */
+  function router() {
+    const g = maps.mapsStatus();
+    if (g !== 'none' && g !== 'failed') return 'google';
+    return onemap.routingAvailable() ? 'onemap' : null;
+  }
+
   function travelBlock(s, p) {
     const moves = s.constraints.filter(c => /campus|move/.test(c.kind));
-    const mapsOn = maps.mapsStatus() !== 'none' && maps.mapsStatus() !== 'failed';
+    const mapsOn = Boolean(router());
     const url = googleMapsDirUrl(p.home, s, MODE_URL[routeState.mode]);
     const head = html`${moves.map(c => html`<p class="note note--warn">${icon('warn')}<span><strong>Campus change.</strong> ${c.fact} ${c.means}</span></p>`)}`;
     if (!p.home) {
@@ -227,10 +235,11 @@ export function mount(el, ctx, [id]) {
         </div>
         ${!mapsOn
           ? html`<p class="route__big"><span class="mono">${km} km</span> <span class="muted">in a straight line from ${p.home.label}</span></p>
-                 <p class="t-small muted measure">${maps.mapsStatus() === 'failed' ? 'Google Maps refused the key, so the route opens in Google Maps instead.' : html`The dashed line is the straight-line distance. Google Maps shows the real route. <button class="inline-link" type="button" data-open-settings>${maps.getKey() ? 'Switch to Google Maps' : 'Add a key'}</button> to see it here with each bus and train.`}</p>`
+                 <p class="t-small muted measure">${maps.mapsStatus() === 'failed' ? 'Google Maps refused the key, so the route opens in Google Maps instead.' : html`The dashed line is the straight-line distance. Google Maps shows the real route. <button class="inline-link" type="button" data-open-settings>Add a OneMap token</button> to see it here with each bus and train.`}</p>`
           : routeState.loading ? html`<p class="t-small muted" role="status">Planning the route…</p>`
           : routeState.error ? html`<p class="note note--warn">${icon('warn')}<span>${routeState.error}</span></p>`
           : r ? routeView(r) : ''}
+        ${router() === 'onemap' && r ? html`<p class="t-small muted">Route from <a class="inline-link" href="https://www.onemap.gov.sg" target="_blank" rel="noopener">OneMap</a>, Singapore Land Authority.</p>` : ''}
         <a class="btn btn--secondary" href="${url}" target="_blank" rel="noopener">Open in Google Maps${icon('out')}</a>
       </div>
     </div>`;
@@ -251,19 +260,24 @@ export function mount(el, ctx, [id]) {
 
   async function planRoute() {
     const p = ctx.state.profile;
-    if (!p.home || maps.mapsStatus() === 'none' || maps.mapsStatus() === 'failed') { paintRouteMap(); return; }
+    const by = router();
+    if (!p.home || !by) { paintRouteMap(); return; }
     routeState.loading = true;
     routeState.error = null;
     repaintTravel();
     try {
       const [hh, mm] = ARRIVE[routeState.arrive];
-      routeState.result = await maps.route(p.home, s, routeState.mode, { hh, mm });
+      routeState.result = by === 'google'
+        ? await maps.route(p.home, s, routeState.mode, { hh, mm })
+        : await onemap.route(p.home, s, routeState.mode, nextSchoolMorning(new Date(), hh, mm));
       routeState.idx = 0;
-      if (!routeState.result.routes.length) routeState.error = 'Google Maps found no route. Open it in Google Maps to try other options.';
+      if (!routeState.result.routes.length) routeState.error = `${by === 'google' ? 'Google Maps' : 'OneMap'} found no route. Open it in Google Maps to try other options.`;
     } catch (e) {
       console.warn(e);
       routeState.result = null;
-      routeState.error = 'The route could not be planned here. Open it in Google Maps instead.';
+      routeState.error = e.message === 'onemap-auth'
+        ? 'OneMap refused the token. Add a new one in map settings, or open the route in Google Maps.'
+        : 'The route could not be planned here. Open it in Google Maps instead.';
     }
     routeState.loading = false;
     repaintTravel();
@@ -296,8 +310,12 @@ export function mount(el, ctx, [id]) {
     map.setSchools([{ id: s.id, name: s.name, lat: s.lat, lng: s.lng, band: 'school' }]);
     map.select(s.id);
     const r = routeState.result;
+    const chosen = r?.routes?.[routeState.idx];
     if (map.kind === 'google' && r?.raw) map.showRoute(r.raw, routeState.idx);
-    else {
+    else if (map.kind === 'maplibre' && chosen?.paths?.length) {
+      map.clearRoute();
+      map.showPaths(chosen.paths, [home, { lat: s.lat, lng: s.lng }]);
+    } else {
       map.clearRoute();
       if (home) map.showLine(home, s);
       map.fit(home ? [home, { lat: s.lat, lng: s.lng }] : [{ lat: s.lat, lng: s.lng }]);

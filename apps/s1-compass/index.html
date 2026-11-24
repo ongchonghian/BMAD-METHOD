@@ -59,21 +59,27 @@
       <legend>Which map</legend>
       <label class="check"><input type="radio" name="provider" value="auto"><span><strong>Automatic.</strong> Google Maps when a key is saved, otherwise the open map.</span></label>
       <label class="check"><input type="radio" name="provider" value="google"><span><strong>Google Maps.</strong> Travel times by bus and train, the route with each bus and train, and a street map. Needs a key.</span></label>
-      <label class="check"><input type="radio" name="provider" value="maplibre"><span><strong>Open map.</strong> MapLibre with OpenStreetMap data, no key. Distances are in a straight line, and routes open in Google Maps.</span></label>
+      <label class="check"><input type="radio" name="provider" value="maplibre"><span><strong>Open map.</strong> MapLibre with OpenStreetMap data, no key. Bus and train routes come from OneMap when it has a token, otherwise distances are in a straight line.</span></label>
     </fieldset>
+    <div class="field" data-onemap-field>
+      <label for="onemap-token">OneMap token, for bus and train routes on the open map</label>
+      <input id="onemap-token" name="onemap" type="text" autocomplete="off" spellcheck="false">
+      <span class="t-small muted" data-onemap-status></span>
+    </div>
     <div class="field">
       <label for="maps-key">Google Maps API key</label>
       <input id="maps-key" name="key" type="text" autocomplete="off" spellcheck="false" inputmode="text">
     </div>
     <p class="t-small muted" data-key-status role="status"></p>
     <details class="howto">
-      <summary>How to get a key</summary>
+      <summary>How to get a key or a token</summary>
       <ol>
         <li>Open the Google Cloud console and create a project with billing turned on.</li>
         <li>Turn on Maps JavaScript API, Places API (New), Directions API and Distance Matrix API.</li>
         <li>Create an API key and restrict it to this website's address.</li>
       </ol>
       <p class="t-small muted">The key stays in this browser. A site owner can set one for everyone in <code>config.js</code>.</p>
+      <p class="t-small muted">For a OneMap token, register for a free account at onemap.gov.sg and request one with your email and password. Tokens last three days. A site owner can run <code>scripts/onemap-proxy.mjs</code> instead, so visitors never need one.</p>
     </details>
     <div class="btn-row">
       <button class="btn btn--primary" type="submit" data-save-key>Save map settings</button>

@@ -163,6 +163,9 @@ export function mount(el, ctx) {
     if (!p.home) return '';
     if (travel.status === 'working') return html`<p class="t-small muted explainer" role="status">${icon('clock')}<span>Working out travel times from ${p.home.label}…</span></p>`;
     if (travel.google) return html`<p class="t-small muted explainer">${icon('clock')}<span>Trips by ${p.mode_travel === 'DRIVING' ? 'car' : 'bus and train'} on a school morning, arriving by 7:15, for the nearest schools. Further schools show distance.</span></p>`;
+    if (travel.source === 'onemap' && travel.status === 'done') return html`<p class="t-small muted explainer">${icon('clock')}<span>Trips by bus and train from OneMap on a school morning, for the nearest schools and your shortlist. Further schools show distance.</span></p>`;
+    if (travel.source === 'onemap' && travel.status === 'error') return html`<p class="t-small muted explainer">${icon('pin')}<span>OneMap could not plan trips just now, so distances are in a straight line from ${p.home.label}.</span></p>`;
+    if (travel.source === 'onemap' && travel.status === 'auth') return html`<p class="t-small muted explainer">${icon('warn')}<span>OneMap refused the token, so distances are in a straight line. <button class="inline-link" type="button" data-open-settings>Update the OneMap token</button></span></p>`;
     return html`<p class="t-small muted explainer">${icon('pin')}<span>Distances are in a straight line from ${p.home.label}. ${maps.mapsStatus() === 'none' ? html`<button class="inline-link" type="button" data-open-settings>${maps.getKey() ? 'Switch to Google Maps' : 'Add a Google Maps key'}</button> for travel times.` : ''}</span></p>`;
   }
 

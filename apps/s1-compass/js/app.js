@@ -1,6 +1,7 @@
 import * as L from './logic.js';
 import { state, update, subscribe, reset, homeKey } from './store.js';
 import * as maps from './maps.js';
+import * as onemap from './onemap.js';
 import { html, icon, toast } from './ui.js';
 import * as startView from './views/start.js';
 import * as setupView from './views/setup.js';
@@ -10,6 +11,7 @@ import * as planView from './views/plan.js';
 import * as guideView from './views/guide.js';
 
 const TRAVEL_GOOGLE_LIMIT = window.S1_CONFIG?.travelTimeSchools ?? 60;
+const TRAVEL_ONEMAP_LIMIT = window.S1_CONFIG?.oneMapTravelSchools ?? 20;
 
 // ------------------------------------------------------------------ the shared context every view reads
 
@@ -19,7 +21,7 @@ export const ctx = {
   weights: {},
   state,
   update,
-  travel: { key: '', data: {}, status: 'idle', google: false },
+  travel: { key: '', data: {}, status: 'idle', google: false, source: 'straight' },
 
   student() {
     const p = state.profile;
@@ -84,17 +86,35 @@ export const ctx = {
   async refreshTravel(force = false) {
     const home = state.profile.home;
     const mode = state.profile.mode_travel;
-    const key = homeKey(home, mode) + `|${maps.mapsStatus() === 'none' ? 'plain' : 'g'}`;
-    if (!home) { ctx.travel = { key: '', data: {}, status: 'idle', google: false }; return; }
+    // Google when it is in use; else OneMap for bus and train trips when it can route; else straight lines.
+    const source = maps.mapsStatus() !== 'none' ? 'google' : mode === 'TRANSIT' && onemap.routingAvailable() ? 'onemap' : 'straight';
+    const key = `${homeKey(home, mode)}|${source}`;
+    if (!home) { ctx.travel = { key: '', data: {}, status: 'idle', google: false, source: 'straight' }; return; }
     if (!force && ctx.travel.key === key && ctx.travel.status !== 'error') return;
-    ctx.travel = { key, data: {}, status: 'working', google: false };
+    ctx.travel = { key, data: {}, status: 'working', google: false, source };
     const all = ctx.data.schools;
     const straight = await maps.travelTimes(home, all, mode, () => {}, { google: false });
     ctx.travel.data = { ...straight };
     notify();
-    if (maps.mapsStatus() === 'none') { ctx.travel.status = 'done'; notify(); return; }
+    if (source === 'straight') { ctx.travel.status = 'done'; notify(); return; }
     const keep = new Set([...state.plan.shortlist, ...state.plan.choices.map(k => k.split('|')[0])]);
-    const near = [...all].sort((a, b) => straight[a.id].km - straight[b.id].km).filter((s, i) => i < TRAVEL_GOOGLE_LIMIT || keep.has(s.id));
+    const limit = source === 'google' ? TRAVEL_GOOGLE_LIMIT : TRAVEL_ONEMAP_LIMIT;
+    const near = [...all].sort((a, b) => straight[a.id].km - straight[b.id].km).filter((s, i) => i < limit || keep.has(s.id));
+    if (source === 'onemap') {
+      try {
+        await onemap.travelTimes(home, near, L.nextSchoolMorning(), partial => {
+          if (ctx.travel.key !== key) return;
+          for (const [id, t] of Object.entries(partial)) ctx.travel.data[id] = { ...ctx.travel.data[id], ...t, km: ctx.travel.data[id]?.km ?? null };
+          notify();
+        });
+        if (ctx.travel.key === key) ctx.travel.status = 'done';
+      } catch (e) {
+        console.warn('OneMap travel times failed; showing distances', e);
+        if (ctx.travel.key === key) ctx.travel.status = e.message === 'onemap-auth' ? 'auth' : 'error';
+      }
+      notify();
+      return;
+    }
     await maps.travelTimes(home, near, mode, partial => {
       if (ctx.travel.key !== key) return;
       Object.assign(ctx.travel.data, partial);
@@ -181,6 +201,8 @@ function settings() {
   const dlg = document.getElementById('settings');
   const input = dlg.querySelector('#maps-key');
   const status = dlg.querySelector('[data-key-status]');
+  const oneMapInput = dlg.querySelector('#onemap-token');
+  const oneMapStatus = dlg.querySelector('[data-onemap-status]');
   const showStatus = () => {
     const s = maps.mapsStatus();
     if (maps.getProvider() === 'maplibre') { status.textContent = 'The open map is on. A saved key is kept but not used.'; return; }
@@ -195,6 +217,10 @@ function settings() {
   document.addEventListener('click', e => {
     if (e.target.closest('[data-open-settings]')) {
       input.value = maps.getKey();
+      oneMapInput.value = onemap.getOwnToken();
+      oneMapStatus.textContent = onemap.getOwnToken()
+        ? 'Saved in this browser. OneMap tokens last three days.'
+        : onemap.routingAvailable() ? 'This site already provides OneMap routes. You do not need a token.' : 'No token yet: the open map shows straight-line distances.';
       const p = dlg.querySelector(`input[name="provider"][value="${maps.getProvider()}"]`);
       if (p) p.checked = true;
       showStatus();
@@ -204,6 +230,7 @@ function settings() {
   dlg.querySelector('[data-save-key]').addEventListener('click', e => {
     e.preventDefault();
     maps.setKey(input.value);
+    onemap.setOwnToken(oneMapInput.value);
     maps.setProvider(dlg.querySelector('input[name="provider"]:checked')?.value || 'auto');
     location.reload();
   });

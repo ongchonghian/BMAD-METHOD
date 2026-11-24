@@ -74,6 +74,7 @@ export async function createMapLibre(el, { onSelect = () => {}, interactive = tr
   };
 
   const LINE = 'home-to-school';
+  const ROUTE = 'planned-route';
   const api = {
     kind: 'maplibre',
     map,
@@ -123,8 +124,31 @@ export async function createMapLibre(el, { onSelect = () => {}, interactive = tr
         paint: { 'line-color': getComputedStyle(document.documentElement).getPropertyValue('--p-accent').trim() || '#0d7480', 'line-width': 2.5, 'line-dasharray': [2, 2] },
       });
     },
+    /** A planned route, one line per leg: walks dashed grey, buses and trains solid in their line colour. */
+    showPaths(paths, extra = []) {
+      const accent = getComputedStyle(document.documentElement).getPropertyValue('--p-accent').trim() || '#0d7480';
+      const features = paths.map(p => ({
+        type: 'Feature',
+        properties: { walk: p.kind === 'walk', colour: p.kind === 'walk' ? '#6b7a80' : p.colour || accent },
+        geometry: { type: 'LineString', coordinates: p.coords },
+      }));
+      const data = { type: 'FeatureCollection', features };
+      if (map.getSource(ROUTE)) map.getSource(ROUTE).setData(data);
+      else {
+        map.addSource(ROUTE, { type: 'geojson', data });
+        map.addLayer({ id: `${ROUTE}-casing`, type: 'line', source: ROUTE, filter: ['!', ['get', 'walk']], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#ffffff', 'line-width': 8 } });
+        map.addLayer({ id: `${ROUTE}-ride`, type: 'line', source: ROUTE, filter: ['!', ['get', 'walk']], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': ['get', 'colour'], 'line-width': 5 } });
+        map.addLayer({ id: `${ROUTE}-walk`, type: 'line', source: ROUTE, filter: ['get', 'walk'], layout: { 'line-cap': 'round' }, paint: { 'line-color': ['get', 'colour'], 'line-width': 3, 'line-dasharray': [0.5, 2] } });
+      }
+      const pts = [...paths.flatMap(p => p.coords.map(([lng, lat]) => ({ lng, lat }))), ...extra.filter(Boolean)];
+      api.fit(pts);
+    },
     showRoute() {},
-    clearRoute() { if (map.getLayer(LINE)) { map.removeLayer(LINE); map.removeSource(LINE); } },
+    clearRoute() {
+      if (map.getLayer(LINE)) { map.removeLayer(LINE); map.removeSource(LINE); }
+      for (const id of [`${ROUTE}-walk`, `${ROUTE}-ride`, `${ROUTE}-casing`]) if (map.getLayer(id)) map.removeLayer(id);
+      if (map.getSource(ROUTE)) map.removeSource(ROUTE);
+    },
     resize() { map.resize(); },
     destroy() { map.remove(); },
   };

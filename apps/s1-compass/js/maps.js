@@ -3,6 +3,7 @@
 // straight-line distance, and a Google Maps link for the route.
 
 import { nextSchoolMorning, distanceKm } from './logic.js';
+import { base as oneMapBase } from './onemap.js';
 
 const KEY_STORE = 's1compass.mapsKey';
 let loading = null;
@@ -127,7 +128,7 @@ export async function searchPlaces(input) {
 
 async function oneMapSearch(q) {
   const p = new URLSearchParams({ searchVal: q, returnGeom: 'Y', getAddrDetails: 'Y', pageNum: '1' });
-  const res = await fetch(`https://www.onemap.gov.sg/api/common/elastic/search?${p}`);
+  const res = await fetch(`${oneMapBase()}/api/common/elastic/search?${p}`);
   if (!res.ok) throw new Error(`OneMap ${res.status}`);
   const json = await res.json();
   return (json.results || []).slice(0, 6).map((r, i) => {
@@ -346,6 +347,7 @@ export async function createMap(el, { onSelect = () => {}, interactive = true } 
     },
     clearRoute() { if (renderer) { renderer.setMap(null); renderer = null; } },
     showLine() {},
+    showPaths() {},
     destroy() {
       for (const m of markers.values()) m.map = null;
       markers.clear();

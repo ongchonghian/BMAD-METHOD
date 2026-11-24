@@ -88,6 +88,7 @@ export function createPlot(el, { onSelect = () => {} } = {}) {
     fit() {},
     showRoute() {},
     showLine() {},
+    showPaths() {},
     clearRoute() {},
     destroy() { el.innerHTML = ''; },
   };
