@@ -1,0 +1,1244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S1 Compass, by MRT</title>
+<meta name="description" content="Keepsake of a BMad brainstorming session on the look and feel of S1 Compass, 24 November 2026.">
+<style>
+:root{
+  --paper:#f6f3ec; --paper2:#ece6d9; --card:#fffdf8; --ink:#13202d; --muted:#4a5462; --rule:#d6cebe;
+  --ew:#009645; --ew-t:#00793a; --ns:#d42e12; --cc:#fa9e0d; --dt:#005ec4; --te:#9d5b25;
+  --better:#1b8656; --close:#c78800; --stricter:#2f6cb3;
+  --night:#0f1a26; --night2:#182636; --nighttext:#eef1f4;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --cond: "Arial Narrow", "Roboto Condensed", "Helvetica Neue", "Segoe UI", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .55 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.55;overflow-x:hidden}
+@supports (overflow:clip){body{overflow-x:clip}}
+p,li,h1,h2,h3{overflow-wrap:break-word}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--dt);outline-offset:3px;border-radius:4px}
+.wrap{max-width:1080px;margin:0 auto;padding:0 16px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+button{font:inherit;cursor:pointer}
+[hidden]{display:none !important}
+.btn{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:8px 18px;border-radius:999px;border:2px solid var(--ink);background:var(--card);color:var(--ink);font-weight:700;font-size:15px;transition:transform .12s ease, box-shadow .12s ease;box-shadow:0 3px 0 var(--ink)}
+.btn:active{transform:translateY(3px);box-shadow:0 0 0 var(--ink)}
+.on-night .btn{background:var(--nighttext);border-color:var(--nighttext);box-shadow:0 3px 0 #6b7a8a}
+.time{font-family:var(--mono);font-size:12.5px;color:var(--muted);letter-spacing:.02em}
+.code{display:inline-block;font-family:var(--cond);font-stretch:condensed;font-weight:800;font-size:13px;letter-spacing:.04em;padding:2px 8px;border-radius:6px;background:var(--c,var(--ink));color:#fff;line-height:1.35}
+.code.dark-t{color:var(--ink)}
+.rej-tag{display:inline-block;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#fff;background:#8a1c0c;padding:2px 8px;border-radius:4px}
+.rejected .idea-text{text-decoration:line-through;text-decoration-thickness:2px;text-decoration-color:#8a1c0c;color:var(--muted)}
+.why-rej{font-size:14.5px;color:#7a1a0b;font-weight:600;margin:.3em 0 0}
+
+/* ---------- sticky line strip ---------- */
+.strip{position:sticky;top:0;z-index:20;background:rgba(246,243,236,.94);border-bottom:1px solid var(--rule);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.strip .wrap{display:flex;align-items:center;gap:14px;min-height:56px;flex-wrap:wrap;padding-top:6px;padding-bottom:6px}
+.strip ol{list-style:none;margin:0;padding:0;display:flex;align-items:center;position:relative}
+.strip ol::before{content:"";position:absolute;left:12px;right:12px;top:50%;height:5px;margin-top:-2.5px;border-radius:3px;background:linear-gradient(90deg,var(--ew) 0 20%,var(--dt) 20% 40%,var(--cc) 40% 60%,var(--ns) 60% 80%,var(--te) 80% 100%)}
+.strip li{position:relative;width:44px;display:flex;justify-content:center}
+.strip a{display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:var(--card);border:4px solid var(--c);text-decoration:none;font:800 9.5px/1 var(--cond);color:var(--ink);transition:transform .2s ease}
+.strip a.done{background:var(--c);color:#fff}
+.strip a.done.dark-t{color:var(--ink)}
+.strip a[aria-current="step"]{transform:scale(1.25);box-shadow:0 0 0 3px var(--card),0 0 0 6px var(--ink)}
+.nextstop{margin:0;font-size:14px;color:var(--muted);line-height:1.3}
+.nextstop b{display:block;color:var(--ink);font-family:var(--cond);font-stretch:condensed;font-size:18px;letter-spacing:.01em}
+
+/* ---------- hero ---------- */
+.hero{position:relative;padding:36px 0 28px;isolation:isolate}
+.frame{position:relative;border-radius:22px;overflow:hidden;color:#fff;padding:28px 22px 26px;
+  background:
+   radial-gradient(120% 90% at 0% 0%, #f08a24 0%, transparent 55%),
+   radial-gradient(90% 90% at 100% 10%, #d6402a 0%, transparent 60%),
+   radial-gradient(120% 120% at 70% 110%, #0a6f5c 0%, transparent 60%),
+   linear-gradient(160deg,#20384f,#13202d)}
+.frame::after{content:"";position:absolute;inset:0;background-image:var(--grain);opacity:.35;mix-blend-mode:overlay;pointer-events:none}
+.frame > *{position:relative;z-index:1}
+.sign{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.sign .code{background:#fff;color:var(--ink);font-size:15px}
+.kicker{font-size:13.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;opacity:.95}
+.hero h1{font-family:var(--cond);font-stretch:condensed;font-weight:800;font-size:clamp(44px,10vw,96px);line-height:.95;margin:16px 0 12px;letter-spacing:-.01em}
+.hero .lede{font-size:clamp(17px,2.4vw,21px);max-width:40em;margin:0 0 6px}
+.announce{display:inline-flex;align-items:center;gap:10px;margin-top:18px;background:#0b1218;color:#ffb347;font-family:var(--mono);font-size:14px;padding:9px 14px;border-radius:8px;letter-spacing:.04em;max-width:100%}
+.announce::before{content:"";width:9px;height:9px;border-radius:50%;background:#ffb347;flex:none}
+.facts{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:22px 0 0}
+.fact{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:12px;padding:10px 12px}
+.fact b{display:block;font-family:var(--cond);font-stretch:expanded;font-size:clamp(28px,5vw,42px);line-height:1;font-weight:800;font-variant-numeric:tabular-nums}
+.fact span{font-size:13.5px}
+@media (max-width:620px){.facts{grid-template-columns:repeat(2,1fr)}}
+
+.sysmap{margin:26px 0 6px;background:var(--card);border:1px solid var(--rule);border-radius:18px;padding:16px}
+.sysmap h2{font-size:15px;letter-spacing:.1em;text-transform:uppercase;margin:0 0 6px;color:var(--muted)}
+.sysmap svg{display:block;width:100%;height:auto;max-width:760px;margin:0 auto}
+.legend{list-style:none;padding:0;margin:12px 0 0;display:flex;flex-wrap:wrap;gap:8px 16px;font-size:14.5px}
+.legend li{display:flex;align-items:center;gap:7px}
+.legend i{display:inline-block;width:22px;height:7px;border-radius:4px;background:var(--c)}
+.legend .hollow{width:12px;height:12px;border-radius:50%;border:3px solid var(--ns);background:#fff}
+
+.departure{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:12px;margin-top:14px}
+@media (max-width:820px){.departure{grid-template-columns:1fr}}
+.note{background:var(--card);border:1px solid var(--rule);border-radius:14px;padding:14px 16px;font-size:15.5px}
+.note h3{margin:0 0 4px;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.note p{margin:.35em 0 0}
+.note blockquote{margin:6px 0 0;padding-left:12px;border-left:4px solid var(--ink);font-size:16px}
+
+/* ---------- section heads (platform signs) ---------- */
+section.tech{padding:46px 0 30px;scroll-margin-top:70px}
+.psign{display:grid;grid-template-columns:auto 1fr;gap:0 16px;align-items:stretch;background:var(--ink);color:#fff;border-radius:16px;overflow:hidden;margin-bottom:24px}
+.psign .bar{width:14px;background:var(--c)}
+.psign .in{padding:16px 16px 18px 0}
+.psign .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.psign .code{font-size:15px}
+.psign .lname{font-size:13px;letter-spacing:.12em;text-transform:uppercase;opacity:.85}
+.psign h2{font-family:var(--cond);font-stretch:condensed;font-weight:800;font-size:clamp(32px,6vw,54px);line-height:1;margin:8px 0 8px}
+.psign .prompt{margin:0;font-size:17px;max-width:46em;opacity:.95}
+.psign .prompt em{font-style:normal;background:rgba(255,255,255,.14);padding:0 4px;border-radius:4px}
+
+/* ---------- vertical station line (generic) ---------- */
+.line{list-style:none;margin:0;padding:0 0 0 58px;position:relative}
+.line::before{content:"";position:absolute;left:21px;top:10px;bottom:10px;width:9px;border-radius:5px;background:var(--c)}
+.stn{position:relative;padding:0 0 22px}
+.stn::before{content:"";position:absolute;left:-46px;top:4px;width:16px;height:16px;border-radius:50%;background:var(--card);border:4px solid var(--c)}
+.stn.ix::before{width:22px;height:22px;left:-49px;top:1px;border:4px solid var(--ink);box-shadow:inset 0 0 0 3px var(--card),inset 0 0 0 7px var(--c)}
+.stn.rejected::before{border-color:#8a1c0c;background:repeating-linear-gradient(45deg,#fff 0 3px,#f2c9bf 3px 6px)}
+.stn .head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.stn p.idea-text{margin:4px 0 0;max-width:40em}
+.stn .spec{margin-top:10px}
+.twocol{display:grid;grid-template-columns:1fr 1fr;gap:0 34px}
+@media (max-width:820px){.twocol{grid-template-columns:1fr}}
+
+/* specimen frames */
+.spec{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:12px 14px;max-width:440px;position:relative}
+.spec .cap{font-size:12.5px;color:var(--muted);margin:8px 0 0}
+.spec-label{position:absolute;top:-9px;right:10px;font:700 10.5px/1 var(--sans);letter-spacing:.1em;text-transform:uppercase;background:var(--paper);color:var(--muted);padding:3px 6px;border-radius:4px;border:1px solid var(--rule)}
+
+/* MM specimens */
+.stepper{display:flex;align-items:center;position:relative;justify-content:space-between;padding:6px 4px}
+.stepper::before{content:"";position:absolute;left:12px;right:12px;top:50%;height:6px;margin-top:-3px;background:linear-gradient(90deg,var(--ew) 0 50%,#cfc8b8 50%)}
+.stepper span{position:relative;width:20px;height:20px;border-radius:50%;background:var(--card);border:4px solid #cfc8b8}
+.stepper .d{background:var(--ew);border-color:var(--ew)}
+.stepper .cur{width:30px;height:30px;border:5px solid var(--ink);box-shadow:inset 0 0 0 3px var(--card),inset 0 0 0 9px var(--ew)}
+.led{background:#0b1218;color:#ffb347;font-family:var(--mono);padding:10px 12px;border-radius:8px;font-size:15px;letter-spacing:.05em}
+.led small{display:block;color:#8fa1b3;font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+.bands{display:flex;gap:16px;flex-wrap:wrap;font-size:14.5px}
+.bands span{display:flex;align-items:center;gap:6px}
+.bands i{width:16px;height:16px;border-radius:50%;border:4px solid var(--b);background:#fff}
+.fut{display:flex;align-items:center;gap:0}
+.fut .seg{flex:1;height:6px;background:var(--ink)}
+.fut .seg.d{background:repeating-linear-gradient(90deg,#9a917f 0 8px,transparent 8px 14px)}
+.fut .dot{width:18px;height:18px;border-radius:50%;border:4px solid var(--ink);background:#fff;flex:none}
+.fut .dot.d{border-style:dashed;border-color:#9a917f}
+.scard{display:flex;background:#fff;border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+.scard .strip-l{width:7px;background:var(--stricter)}
+.scard .c{padding:10px 12px;flex:1}
+.skel{display:block;height:9px;border-radius:5px;background:#e4ddcf;margin:6px 0}
+.ezl{position:relative;width:250px;max-width:100%;aspect-ratio:1.58;border-radius:14px;padding:14px;color:#fff;background:linear-gradient(135deg,#0b6c78,#0c3f66);overflow:hidden;font-family:var(--cond)}
+.ezl::after{content:"";position:absolute;inset:0;background-image:var(--grain);opacity:.25;mix-blend-mode:overlay}
+.ezl .t{font-weight:800;letter-spacing:.06em;font-size:14px}
+.ezl dl{display:flex;gap:22px;margin:18px 0 0}
+.ezl dt{font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.85}
+.ezl dd{margin:0;font:800 30px/1 var(--cond);font-stretch:expanded}
+.stamp{position:absolute;right:12px;bottom:10px;width:66px;height:66px;border-radius:50%;border:3px solid #ffb347;color:#ffb347;display:flex;align-items:center;justify-content:center;text-align:center;font:800 10.5px/1.15 var(--cond);letter-spacing:.06em;transform:rotate(-14deg);z-index:1}
+.route{display:flex;height:14px;border-radius:7px;overflow:hidden;gap:3px}
+.route i{display:block}
+.route-l{display:flex;gap:3px;font-size:12.5px;color:var(--muted);margin-top:5px}
+.legs{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:14px}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-weight:700;font-size:13px;color:#fff;background:var(--c)}
+.pill.ghost{background:transparent;color:var(--ink);border:2px dotted var(--muted)}
+.marker{display:flex;align-items:center;gap:20px;flex-wrap:wrap;font-size:14.5px}
+.marker span{display:flex;align-items:center;gap:8px}
+.ring1{width:22px;height:22px;border-radius:50%;border:5px solid var(--ink);background:#fff;box-shadow:0 0 0 5px rgba(19,32,45,.15)}
+.ring2{width:24px;height:24px;border-radius:50%;border:4px solid var(--ink);box-shadow:inset 0 0 0 3px #fff,inset 0 0 0 7px var(--ink)}
+.platform{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.platform .now{font-family:var(--cond);font-stretch:condensed;font-weight:800;font-size:34px;line-height:1;text-transform:none}
+.platform .other{font-size:15px;color:var(--muted)}
+.doors{position:relative;height:110px;border-radius:10px;overflow:hidden;background:var(--paper2);border:1px solid var(--rule)}
+.doors .behind{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--cond);font-stretch:condensed;font-weight:800;font-size:26px}
+.doors .p{position:absolute;top:0;bottom:0;width:50%;background:linear-gradient(90deg,#dce8f0,#bed2e0);border:2px solid #8ea4b6;transition:transform .45s cubic-bezier(.3,.7,.2,1)}
+.doors .p::after{content:"";position:absolute;left:18%;right:18%;top:40%;height:6px;background:var(--ew);border-radius:3px}
+.doors .l{left:0}.doors .r{right:0}
+.doors.open .l{transform:translateX(-100%)}.doors.open .r{transform:translateX(100%)}
+
+/* ---------- Persona Journey ---------- */
+.tracks{display:grid;grid-template-columns:1.15fr 1fr;gap:16px}
+@media (max-width:860px){.tracks{grid-template-columns:1fr}}
+.track{border-radius:18px;padding:18px 16px 4px;position:relative;overflow:hidden}
+.track h3{margin:0 0 2px;font-family:var(--cond);font-stretch:condensed;font-size:28px;line-height:1.05}
+.track .sub{margin:0 0 16px;font-size:15px}
+.day{background:linear-gradient(180deg,#fff3dc,#fffaf0 40%);border:1px solid #ecd9b3}
+.day .sun{position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,#ffc65c 0 40%,rgba(255,198,92,.25) 41% 60%,transparent 61%)}
+.night{background:linear-gradient(180deg,var(--night),var(--night2));color:var(--nighttext)}
+.night .sub,.night .time{color:#b8c4d0}
+.night .stn::before{background:var(--night)}
+.night .spec{background:#203246;border-color:#33485f;color:var(--nighttext)}
+.night .spec .cap{color:#b8c4d0}
+.night .spec-label{background:var(--night);border-color:#33485f;color:#b8c4d0}
+.night .moon{position:absolute;right:20px;top:18px;width:38px;height:38px;border-radius:50%;box-shadow:-9px 4px 0 0 #f3e6bf}
+.stars{position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(1.5px 1.5px at 20% 12%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 60% 6%,#fff 50%,transparent 51%),radial-gradient(1.5px 1.5px at 82% 30%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 40% 24%,#fff 50%,transparent 51%);opacity:.6}
+.both{margin-top:16px;display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;background:var(--card);border:2px solid var(--ink);border-radius:18px;padding:16px}
+.both .ix-big{width:54px;height:54px;border-radius:50%;border:6px solid var(--ink);box-shadow:inset 0 0 0 4px #fff,inset 0 0 0 11px var(--dt)}
+.both h3{margin:0;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.welcome{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px;font-weight:700}
+.six{display:flex;gap:5px}
+.six i{width:14px;height:14px;border-radius:50%;border:3px solid var(--ink)}
+.six i.f{background:var(--ink)}
+.scorecard{background:#fff;border-radius:14px;padding:14px 16px;box-shadow:0 1px 0 var(--rule),0 10px 24px -10px rgba(19,32,45,.45),0 2px 6px rgba(19,32,45,.12);display:flex;align-items:center;gap:14px;max-width:300px}
+.scorecard .lab{font:800 14px/1.1 var(--cond);letter-spacing:.1em;color:var(--muted)}
+.drums{display:flex;gap:4px}
+.drum{height:64px;width:44px;overflow:hidden;border-radius:8px;background:var(--paper2);position:relative}
+.drum::before,.drum::after{content:"";position:absolute;left:0;right:0;height:16px;z-index:1}
+.drum::before{top:0;background:linear-gradient(var(--paper2),transparent)}
+.drum::after{bottom:0;background:linear-gradient(transparent,var(--paper2))}
+.drum .col{display:flex;flex-direction:column;font:800 52px/64px var(--cond);font-stretch:expanded;text-align:center;font-variant-numeric:tabular-nums;transform:translateY(-640px)}
+.drum.roll .col{animation:roll 1.2s cubic-bezier(.2,.8,.2,1) both}
+.drum.roll.d2 .col{animation-duration:1.55s}
+@keyframes roll{from{transform:translateY(0)}to{transform:translateY(-640px)}}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips span{display:inline-flex;align-items:center;gap:5px;height:30px;padding:0 10px 0 7px;border-radius:999px;border:2px solid var(--ink);background:#fff}
+.chips span.on{background:var(--ink)}
+.chips span.on svg{stroke:#fff}
+.chips span.on i{background:#fff}
+.chips svg{width:16px;height:16px;fill:none;stroke:var(--ink);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.chips i{display:block;width:22px;height:5px;border-radius:3px;background:#d3cbbb}
+.win{display:flex;align-items:center;gap:14px}
+.win svg{width:48px;height:48px}
+.win .ck{stroke-dasharray:40;stroke-dashoffset:0}
+.win.go .ck{animation:draw .5s ease-out both}
+@keyframes draw{from{stroke-dashoffset:40}to{stroke-dashoffset:0}}
+.tick{font:800 30px/1 var(--cond);font-stretch:expanded;font-variant-numeric:tabular-nums}
+.you-school h4{margin:0;font-family:var(--cond);font-stretch:condensed;font-size:24px}
+.voice{display:flex;gap:10px;flex-wrap:wrap;font-weight:700}
+.voice .no{text-decoration:line-through;color:#a3241a;text-decoration-thickness:2px}
+.night .voice .no{color:#ff9b8a}
+.phone{width:150px;height:230px;border:3px solid currentColor;border-radius:22px;padding:14px 9px 8px;display:flex;flex-direction:column;gap:6px;position:relative}
+.phone .blk{border-radius:6px;background:#d3cbbb;height:16px}
+.phone .travel{background:var(--ew);height:40px;color:#fff;font:800 11px/40px var(--sans);text-align:center;letter-spacing:.06em}
+.phone .bar{margin-top:auto;height:42px;border-radius:12px;background:var(--ink);color:#fff;font:700 12px/42px var(--sans);text-align:center}
+.night .phone .blk{background:#3a5068}
+.night .phone .bar{background:var(--nighttext);color:var(--night)}
+.phones{display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap}
+.reassure{display:inline-flex;gap:8px;align-items:center;font-size:14.5px;border-radius:999px;padding:6px 12px;background:rgba(255,255,255,.1);border:1px solid #4a627b}
+.why{font-size:14.5px;border-left:3px solid #6fa3d8;padding-left:10px;margin:8px 0 0}
+.src{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border:1px solid #6d8399;border-radius:4px;padding:1px 6px;margin-left:6px}
+.miniticket{display:flex;border-radius:10px;overflow:hidden;font-family:var(--mono);font-size:13px;max-width:300px}
+.miniticket .a{flex:1;background:#f3e6bf;color:var(--ink);padding:10px 12px}
+.miniticket .b{width:76px;background:#e9d8a6;color:var(--ink);padding:10px 8px;border-left:2px dashed #8f7a3e;text-align:center}
+
+/* ---------- Cross-Pollination ---------- */
+.cp-grid{display:grid;grid-template-columns:minmax(0,380px) 1fr;gap:24px;align-items:start}
+@media (max-width:860px){.cp-grid{grid-template-columns:1fr}}
+.circle svg{width:100%;height:auto;max-width:420px;display:block;margin:0 auto}
+@media (min-width:861px){.circle{position:sticky;top:84px}}
+.transfers{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:620px){.transfers{grid-template-columns:1fr}}
+.xfer{background:var(--card);border:1px solid var(--rule);border-radius:14px;padding:14px 14px 10px;border-top:7px solid var(--cc)}
+.xfer h3{margin:0 0 6px;display:flex;align-items:center;gap:8px;font-size:17px}
+.xfer h3 .n{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;border:4px solid var(--cc);font:800 12px/1 var(--sans);background:#fff}
+.xfer ul{list-style:none;margin:0;padding:0}
+.xfer li{padding:8px 0;border-top:1px dashed var(--rule)}
+.xfer li:first-child{border-top:0}
+.xfer li p{margin:3px 0 0}
+.xfer.wide{grid-column:1 / -1}
+.bpass{display:grid;grid-template-columns:1fr auto;border-radius:12px;overflow:hidden;font-family:var(--mono);font-size:13px;box-shadow:0 6px 18px -10px rgba(0,0,0,.4)}
+.bpass .main{background:#fff;padding:12px;border:1px solid var(--rule);border-right:0;border-radius:12px 0 0 12px}
+.bpass .stub{background:var(--ink);color:#fff;padding:12px;width:124px;position:relative;border-left:2px dashed #fff}
+.bpass .stub .v{font-family:var(--sans);overflow-wrap:normal;line-height:1.25}
+.bpass .k{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.bpass .stub .k{color:#b8c4d0}
+.bpass .v{font-weight:700;font-size:15px}
+.codes{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.codes span{border:1px solid var(--rule);border-radius:4px;padding:0 5px;letter-spacing:.1em}
+.dotline{position:relative;height:6px;border-radius:3px;background:#e4ddcf;margin:12px 0 6px}
+.dotline i{position:absolute;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:var(--cc);border:3px solid var(--ink);left:0;animation:travel 2.6s ease-in-out infinite alternate}
+@keyframes travel{to{left:100%}}
+.badges{display:flex;flex-wrap:wrap;gap:8px}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:13.5px;font-weight:700;border:2px solid var(--ink);border-radius:8px;padding:3px 9px 3px 5px;background:#fff}
+.badge::before{content:"";width:14px;height:14px;border-radius:50%;border:3px solid var(--cc)}
+.balance{display:flex;height:16px;border-radius:8px;overflow:hidden;margin-top:6px}
+.ringwrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.ringwrap svg{width:84px;height:84px;transform:rotate(-90deg)}
+.ringwrap .seg{transition:opacity .35s ease, stroke .35s ease}
+.recap{background:linear-gradient(135deg,#f08a24,#d6402a);color:#fff;border-radius:12px;padding:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;position:relative;overflow:hidden}
+.recap::after{content:"";position:absolute;inset:0;background-image:var(--grain);opacity:.35;mix-blend-mode:overlay}
+.recap div{position:relative;z-index:1;font-size:12px;line-height:1.25}
+.recap b{display:block;font:800 26px/1 var(--cond);font-stretch:expanded;margin-bottom:3px}
+.crumbs{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:13.5px}
+.crumbs span{padding:2px 8px;border-radius:999px;background:var(--paper2)}
+.crumbs .go{background:var(--ink);color:#fff;font-weight:700;padding:6px 12px}
+
+/* ---------- Reverse Brainstorming ---------- */
+.board{background:#0b1218;color:#ffb347;font-family:var(--mono);border-radius:14px;padding:14px 16px;margin-bottom:18px;font-size:15px;letter-spacing:.03em;border:3px solid #26313b}
+.board b{color:#ff6b4f}
+.disruptions{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.dis{display:grid;grid-template-columns:1fr 54px 1.25fr;align-items:stretch;border-radius:14px;overflow:hidden;border:1px solid var(--rule);background:var(--card)}
+.dis .f{background:#22191a;color:#ffd8cf;padding:12px 14px}
+.dis .sw{display:flex;align-items:center;justify-content:center;background:linear-gradient(90deg,#22191a 50%,var(--card) 50%)}
+.dis .sw svg{width:40px;height:40px}
+.dis .i{padding:12px 14px}
+.dis .lbl{display:flex;gap:8px;align-items:center;font:800 11.5px/1 var(--sans);letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px}
+.dis .f .lbl span{background:var(--ns);color:#fff;padding:3px 6px;border-radius:4px}
+.dis .i .lbl span{background:var(--ew-t);color:#fff;padding:3px 6px;border-radius:4px}
+.dis p{margin:0}
+.dis .f p{font-family:var(--mono);font-size:15px}
+@media (max-width:700px){
+  .dis{grid-template-columns:1fr}
+  .dis .sw{height:34px;background:linear-gradient(180deg,#22191a 50%,var(--card) 50%)}
+  .dis .sw svg{transform:rotate(90deg);width:30px;height:30px}
+}
+
+/* ---------- Sensory ---------- */
+.senses{display:grid;grid-template-columns:1.25fr 1fr .7fr;gap:16px;align-items:start}
+.senses > *,.twocol > *,.tracks > *,.cp-grid > *,.transfers > *,.yl-out > *,.departure > *,.ins > *{min-width:0}
+@media (max-width:900px){.senses{grid-template-columns:1fr}}
+.sense h3{display:flex;align-items:center;gap:10px;font-family:var(--cond);font-stretch:condensed;font-size:30px;margin:0 0 10px}
+.sense h3 svg{width:28px;height:28px;fill:none;stroke:var(--te);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.tile{background:var(--card);border:1px solid var(--rule);border-radius:14px;padding:14px;margin-bottom:12px;border-left:7px solid var(--te)}
+.tile p{margin:4px 0 0}
+.tile .spec{margin-top:10px;max-width:none}
+.wide-num{white-space:nowrap;font-family:var(--cond);font-stretch:ultra-expanded;font-weight:800;font-size:clamp(40px,5.4vw,58px);line-height:1;letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.wide-num small{font-size:.32em;letter-spacing:.06em;font-weight:700;color:var(--muted);margin-left:6px}
+.grainswatch{height:80px;border-radius:10px;position:relative;overflow:hidden;background:radial-gradient(100% 120% at 0% 0%,#f5c189,transparent 60%),radial-gradient(100% 120% at 100% 100%,#e7a28f,transparent 60%),#f4e9da}
+.grainswatch::after{content:"";position:absolute;inset:0;background-image:var(--grain);opacity:.45;mix-blend-mode:multiply}
+.marquee{overflow:hidden;border-radius:10px;background:var(--ink);color:#f3e6bf;padding:9px 0;font-family:var(--cond);font-stretch:condensed;font-weight:800;font-size:20px;letter-spacing:.02em;white-space:nowrap;max-width:100%}
+.marquee .trk{display:inline-flex;gap:26px;padding-left:26px;animation:mq 38s linear infinite}
+.marquee .trk span::after{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--cc);margin-left:26px;vertical-align:middle}
+@keyframes mq{to{transform:translateX(-50%)}}
+.island{display:flex;align-items:center;gap:12px}
+.island svg{width:170px;max-width:60%;height:auto}
+.island p{font-size:14px;color:var(--muted)}
+.slidebox{height:74px;border-radius:10px;background:var(--paper2);display:flex;align-items:center;padding:0 14px;overflow:hidden}
+.slidebox .pg{background:#fff;border:1px solid var(--rule);border-radius:8px;padding:8px 12px;font-weight:700}
+.slidebox .pg.in{animation:pgin .22s ease-out both}
+@keyframes pgin{from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:none}}
+.mute{display:flex;align-items:center;gap:12px}
+.mute svg{width:44px;height:44px;flex:none;fill:none;stroke:#8a1c0c;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.tile.rejected{border-left-color:#8a1c0c;background:repeating-linear-gradient(-45deg,var(--card) 0 12px,#f7ece7 12px 24px)}
+
+/* ---------- Synthesis / climax ---------- */
+.climax{background:var(--night);color:var(--nighttext);padding:56px 0 46px;margin-top:30px;position:relative;overflow:hidden;scroll-margin-top:56px}
+.climax::before{content:"";position:absolute;inset:0;background:radial-gradient(70% 50% at 85% 0%,rgba(250,158,13,.18),transparent 70%),radial-gradient(60% 50% at 0% 30%,rgba(0,150,69,.14),transparent 70%);pointer-events:none}
+.climax .wrap{position:relative}
+.climax .kick{font-size:13.5px;letter-spacing:.14em;text-transform:uppercase;color:#b8c4d0;font-weight:700}
+.climax h2{font-family:var(--cond);font-stretch:condensed;font-weight:800;font-size:clamp(46px,11vw,108px);line-height:.92;margin:10px 0 14px}
+.climax h2 .rainbow{background:linear-gradient(90deg,var(--ew),var(--dt) 25%,var(--cc) 50%,var(--ns) 75%,var(--te));-webkit-background-clip:text;background-clip:text;color:transparent}
+.climax .lede{font-size:19px;max-width:38em;color:#dbe2e9}
+.ins{margin-top:34px;display:grid;grid-template-columns:200px 1fr;gap:18px;border-top:1px solid #2c3e52;padding-top:24px}
+@media (max-width:760px){.ins{grid-template-columns:1fr}}
+.ins .num{font:800 15px/1.2 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:#f3c26b}
+.ins .num .time{display:block;color:#8fa1b3;margin-top:4px}
+.ins h3{margin:0 0 6px;font-size:clamp(22px,3.4vw,30px);line-height:1.15}
+.ins p{margin:0 0 10px;color:#dbe2e9;max-width:44em}
+.merge{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;font-size:14px;font-weight:700;max-width:560px}
+.merge span{display:block}
+.merge svg{grid-column:1 / -1;width:100%;height:auto}
+.merge .out{grid-column:1 / -1;font-family:var(--cond);font-stretch:condensed;font-size:22px;color:#fff}
+.states{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 12px}
+.states button{min-height:40px;border-radius:999px;border:2px solid #4a627b;background:transparent;color:var(--nighttext);padding:4px 14px;font-size:14.5px;font-weight:600}
+.states button[aria-pressed="true"]{background:#f3c26b;border-color:#f3c26b;color:var(--night)}
+.nextcard{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center;background:#fff;color:var(--ink);border-radius:14px;padding:14px 16px;max-width:520px}
+.nextcard .ring{width:40px;height:40px;border-radius:50%;border:5px solid var(--ink);box-shadow:inset 0 0 0 4px #fff,inset 0 0 0 10px var(--cc)}
+.nextcard small{display:block;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.nextcard b{font-size:17px}
+.where{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;font-size:14px}
+.where span{border:2px solid #4a627b;border-radius:6px;padding:3px 10px;font-family:var(--cond);font-stretch:condensed;font-weight:800;letter-spacing:.04em}
+
+.yourline{margin-top:16px;background:linear-gradient(180deg,#132232,#0f1a26);border:1px solid #2c3e52;border-radius:20px;padding:22px 18px 20px}
+.yl-track{position:relative;display:grid;grid-template-columns:repeat(7,1fr);align-items:start;margin:22px 0 8px}
+.yl-track .rail{position:absolute;left:calc(100%/14);right:calc(100%/14);top:15px;height:10px;border-radius:5px;background:repeating-linear-gradient(90deg,#4a627b 0 10px,transparent 10px 18px)}
+.yl-track .fill{position:absolute;left:calc(100%/14);right:calc(100%/14);top:15px;height:10px;border-radius:5px;background:#fff;transform-origin:left center;transform:scaleX(0);transition:transform 1.1s cubic-bezier(.5,.05,.2,1)}
+.yourline.done .fill{transform:scaleX(1)}
+.yl-stop{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;font-size:12.5px;color:#b8c4d0;gap:7px;min-width:0}
+.yl-stop .dot{width:40px;height:40px;border-radius:50%;border:4px dashed #6b7f94;background:var(--night);transition:background .3s ease,border-color .3s ease,transform .3s ease}
+.yl-stop.placed .dot{border-style:solid;border-color:#fff;background:var(--b);transform:scale(1.05)}
+.yl-stop.term .dot{border:5px solid #fff;border-style:solid;background:var(--night);box-shadow:inset 0 0 0 4px var(--night),inset 0 0 0 10px #f3c26b;width:44px;height:44px;margin-top:-2px}
+.yl-stop b{color:#fff;font-size:13px}
+.yl-msg{min-height:1.6em;font-family:var(--cond);font-stretch:condensed;font-weight:800;font-size:clamp(24px,4.6vw,36px);color:#fff;margin:6px 0 4px;opacity:0;transition:opacity .4s ease .9s}
+.yourline.done .yl-msg{opacity:1}
+.yl-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.yl-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13.5px;color:#b8c4d0;margin-top:12px}
+.yl-legend span{display:flex;align-items:center;gap:6px}
+.yl-legend i{width:14px;height:14px;border-radius:50%;background:var(--b);border:2px solid #fff}
+.yl-out{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
+@media (max-width:760px){.yl-out{grid-template-columns:1fr}}
+.panel{background:#fff;color:var(--ink);border-radius:14px;padding:14px 16px}
+.panel h4{margin:0 0 4px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.panel .sentence{font-size:17px;font-weight:700;margin:2px 0 0}
+.ticket{display:grid;grid-template-columns:1fr 96px;border-radius:14px;overflow:hidden;font-family:var(--mono);color:var(--ink)}
+.ticket .main{background:#f3e6bf;padding:14px}
+.ticket .stub{background:#e5d29a;padding:14px 10px;border-left:3px dashed #7c6a35;display:flex;flex-direction:column;justify-content:space-between}
+.ticket .k{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:#5d5130}
+.ticket .t{font-family:var(--cond);font-stretch:condensed;font-weight:800;font-size:22px;margin:0 0 6px}
+.ticket ol{margin:6px 0 0;padding-left:22px;font-size:13.5px}
+.ticket ol li{padding:1px 0}
+
+.decision{margin-top:40px;border-top:1px solid #2c3e52;padding-top:28px}
+.decision h3{font-family:var(--cond);font-stretch:condensed;font-size:clamp(30px,5vw,44px);margin:6px 0 16px;line-height:1}
+.route-final{list-style:none;margin:0;padding:0 0 0 60px;position:relative;counter-reset:st}
+.route-final::before{content:"";position:absolute;left:21px;top:12px;bottom:12px;width:11px;border-radius:6px;background:linear-gradient(180deg,var(--ew),var(--dt) 25%,var(--cc) 50%,var(--ns) 75%,var(--te))}
+.route-final li{position:relative;padding:0 0 16px;counter-increment:st}
+.route-final li::before{content:counter(st);position:absolute;left:-50px;top:-2px;width:32px;height:32px;border-radius:50%;background:#fff;color:var(--night);border:4px solid var(--night);box-shadow:0 0 0 3px #fff;display:flex;align-items:center;justify-content:center;font:800 14px/1 var(--sans)}
+.route-final li b{display:block;font-size:18px;color:#fff;line-height:1.3}
+.route-final li span{color:#c8d2dc;font-size:15.5px}
+.closed{margin-top:22px;background:#1b2836;border:2px dashed #5b6e82;border-radius:16px;padding:16px}
+.closed h4{margin:0 0 10px;display:flex;align-items:center;gap:10px;font-size:15px;letter-spacing:.1em;text-transform:uppercase;color:#ffb3a3}
+.closed ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media (max-width:700px){.closed ul{grid-template-columns:1fr}}
+.closed li{background:#0f1a26;border-radius:10px;padding:10px 12px;border-left:6px solid #8a1c0c}
+.closed li b{display:block;font-family:var(--cond);font-stretch:condensed;font-size:22px;text-decoration:line-through;text-decoration-color:#ff6b4f;text-decoration-thickness:3px;color:#fff}
+.closed li span{font-size:14px;color:#c8d2dc}
+
+footer{background:var(--night);color:#b8c4d0;border-top:1px solid #2c3e52;padding:18px 0 26px;font-size:14px}
+footer .wrap{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+footer i{display:inline-block;width:12px;height:12px;border-radius:50%;border:3px solid #f3c26b}
+
+@media (max-width:520px){
+  body{font-size:16.5px}
+  .line{padding-left:48px}
+  .line::before{left:15px}
+  .stn::before{left:-40px}
+  .stn.ix::before{left:-43px}
+  .route-final{padding-left:52px}
+  .route-final::before{left:15px}
+  .route-final li::before{left:-46px}
+  .yl-stop .dot{width:30px;height:30px}
+  .yl-stop.term .dot{width:34px;height:34px}
+  .yl-track .rail,.yl-track .fill{top:11px;height:8px}
+  .yl-stop{font-size:11px}
+  .yl-stop b{font-size:11.5px}
+  .strip li{width:40px}
+  .bpass .stub{width:112px}
+}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none !important;transition:none !important;scroll-behavior:auto !important}
+  .drum .col{transform:translateY(-640px)}
+  .marquee{white-space:normal}
+  .marquee .trk{flex-wrap:wrap;gap:6px 18px;padding:0 14px}
+  .marquee .trk span.dup{display:none}
+  .dotline i{left:50%}
+}
+</style>
+</head>
+<body>
+
+<nav class="strip" aria-label="Session line">
+  <div class="wrap">
+    <ol>
+      <li><a href="#mm" style="--c:var(--ew)" data-sec="mm" title="Metaphor Mapping">MM</a></li>
+      <li><a href="#pj" style="--c:var(--dt)" data-sec="pj" title="Persona Journey">PJ</a></li>
+      <li><a href="#cp" style="--c:var(--cc)" data-sec="cp" class="dark-t" title="Cross-Pollination">CP</a></li>
+      <li><a href="#rb" style="--c:var(--ns)" data-sec="rb" title="Reverse Brainstorming">RB</a></li>
+      <li><a href="#se" style="--c:var(--te)" data-sec="se" title="Sensory Exploration">SE</a></li>
+      <li><a href="#yl" style="--c:var(--ink)" data-sec="yl" title="Your line">YL</a></li>
+    </ol>
+    <p class="nextstop" aria-live="polite"><span id="ns-k">Next stop</span><b id="ns-v">Metaphor Mapping</b></p>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="frame">
+      <div class="sign"><span class="code">S1</span><span class="kicker">Brainstorm keepsake · Tuesday 24 November 2026</span></div>
+      <h1>S1 Compass,<br>by MRT</h1>
+      <p class="lede">A web app helps a Primary 6 student and their parents pick six secondary schools. This session asked how it should look and feel, and found the answer on the train: every step a station, every choice a stop on <strong>your line</strong>.</p>
+      <p class="announce">Doors closing · five lines · one interchange</p>
+      <div class="facts">
+        <div class="fact"><b>5</b><span>techniques, one line each</span></div>
+        <div class="fact"><b>58</b><span>ideas, one station each</span></div>
+        <div class="fact"><b>3</b><span>insights at the interchange</span></div>
+        <div class="fact"><b>1</b><span>direction chosen</span></div>
+      </div>
+    </div>
+
+    <div class="sysmap">
+      <h2>System map of the session</h2>
+      <svg id="sysmap" viewBox="0 0 420 230" role="img" aria-labelledby="smt">
+        <title id="smt">Five technique lines, each dotted with one station per idea, converge on a single interchange called Your line.</title>
+        <g id="sm-lines"></g>
+        <circle cx="384" cy="115" r="25" fill="#fff" stroke="#13202d" stroke-width="7"/>
+        <circle cx="384" cy="115" r="12" fill="#13202d"/>
+        <text x="384" y="162" text-anchor="middle" font-family="Arial Narrow, Arial, sans-serif" font-weight="800" font-size="15" fill="#13202d">Your line</text>
+      </svg>
+      <ul class="legend">
+        <li><i style="--c:var(--ew)"></i>MM · Metaphor Mapping · 14</li>
+        <li><i style="--c:var(--dt)"></i>PJ · Persona Journey · 14</li>
+        <li><i style="--c:var(--cc)"></i>CP · Cross-Pollination · 12</li>
+        <li><i style="--c:var(--ns)"></i>RB · Reverse Brainstorming · 10</li>
+        <li><i style="--c:var(--te)"></i>SE · Sensory Exploration · 8</li>
+        <li><span class="hollow"></span>rejected idea</li>
+      </ul>
+    </div>
+
+    <div class="departure">
+      <div class="note">
+        <h3>Ticket bought</h3>
+        <blockquote>Improve the look and feel of S1 Compass for a P6 student and their parents; impressive through the whole flow; the service one step ahead of the user; keep tasteskill quality (one system, dealt moments, no violet, no scroll reveals).</blockquote>
+      </div>
+      <div class="note">
+        <h3>Stance</h3>
+        <p><strong>Ideate for me.</strong> The user asked for the result, not a facilitated session.</p>
+        <p>Art direction: no template; the subject, energy and whimsy drive the look; each part gets its own treatment; the synthesis (My six) is the climax.</p>
+      </div>
+      <div class="note">
+        <h3>Kit dealt for the start page</h3>
+        <p>Effect: <strong>grain-gradient</strong> in the hero frame.</p>
+        <p>Moments: <strong>marquee-row</strong> (section) and <strong>liquid-type</strong> (statement).</p>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<!-- ================= METAPHOR MAPPING ================= -->
+<section class="tech" id="mm">
+  <div class="wrap">
+    <div class="psign" style="--c:var(--ew)">
+      <div class="bar"></div>
+      <div class="in">
+        <div class="row"><span class="code" style="--c:var(--ew)">MM</span><span class="lname">Line 1 · Technique</span></div>
+        <h2>Metaphor Mapping</h2>
+        <p class="prompt">Choosing a secondary school <em>is</em> planning a journey on the MRT.</p>
+      </div>
+    </div>
+
+    <div class="twocol">
+      <ol class="line" style="--c:var(--ew)">
+        <li class="stn ix">
+          <div class="head"><span class="code" style="--c:var(--ew)">MM1</span></div>
+          <p class="idea-text">The setup stepper is an MRT line: each step a station, the current one an interchange ring, done stations filled.</p>
+          <div class="spec"><span class="spec-label">sketch</span>
+            <div class="stepper" aria-hidden="true"><span class="d"></span><span class="d"></span><span class="cur"></span><span></span><span></span></div>
+          </div>
+        </li>
+        <li class="stn">
+          <div class="head"><span class="code" style="--c:var(--ew)">MM2</span></div>
+          <p class="idea-text">“Next stop: About you” under the progress line, like the train announcement, so the student always knows what comes next.</p>
+          <div class="spec"><span class="spec-label">sketch</span><div class="led"><small>Announcement</small>Next stop: About you</div></div>
+        </li>
+        <li class="stn">
+          <div class="head"><span class="code" style="--c:var(--ew)">MM3</span></div>
+          <p class="idea-text">My six is a line diagram: six stations in the student’s order, the terminus labelled “Posting results”.</p>
+        </li>
+        <li class="stn">
+          <div class="head"><span class="code" style="--c:var(--ew)">MM4</span></div>
+          <p class="idea-text">Each station dot takes the band colour of that choice (better than both, close, stricter): the line reads as a risk profile at a glance.</p>
+          <div class="spec"><span class="spec-label">sketch</span>
+            <div class="bands"><span style="--b:var(--better)"><i></i>better than both</span><span style="--b:var(--close)"><i></i>close</span><span style="--b:var(--stricter)"><i></i>stricter</span></div>
+          </div>
+        </li>
+        <li class="stn">
+          <div class="head"><span class="code" style="--c:var(--ew)">MM5</span></div>
+          <p class="idea-text">Empty choices are dashed “future stations” on the line.</p>
+          <div class="spec"><span class="spec-label">sketch</span>
+            <div class="fut" aria-hidden="true"><span class="dot"></span><span class="seg"></span><span class="dot"></span><span class="seg d"></span><span class="dot d"></span><span class="seg d"></span><span class="dot d"></span></div>
+          </div>
+        </li>
+        <li class="stn">
+          <div class="head"><span class="code" style="--c:var(--ew)">MM6</span></div>
+          <p class="idea-text">When the sixth station is placed and the checks pass, the line draws through once: “Your line is complete”.</p>
+          <p class="cap" style="font-size:14px;color:var(--muted);margin:4px 0 0">Try it at the terminus of this page.</p>
+        </li>
+        <li class="stn">
+          <div class="head"><span class="code" style="--c:var(--ew)">MM7</span></div>
+          <p class="idea-text">School cards carry a thin vertical line strip on the left, like a station sign’s line colour.</p>
+          <div class="spec"><span class="spec-label">sketch</span>
+            <div class="scard"><span class="strip-l"></span><div class="c"><span class="skel" style="width:60%;height:12px;background:#cfc6b4"></span><span class="skel" style="width:85%"></span><span class="skel" style="width:40%"></span></div></div>
+          </div>
+        </li>
+      </ol>
+      <ol class="line" style="--c:var(--ew)">
+        <li class="stn">
+          <div class="head"><span class="code" style="--c:var(--ew)">MM8</span></div>
+          <p class="idea-text">The posting group shown as a “ticket” stamped with AL and group, like an EZ-Link card.</p>
+          <div class="spec"><span class="spec-label">sketch</span>
+            <div class="ezl"><div class="t">S1 COMPASS · POSTING GROUP</div><dl><div><dt>AL</dt><dd>—</dd></div><div><dt>Group</dt><dd>—</dd></div></dl><div class="stamp">AL<br>+<br>GROUP</div></div>
+          </div>
+        </li>
+        <li class="stn">
+          <div class="head"><span class="code" style="--c:var(--ew)">MM9</span></div>
+          <p class="idea-text">Travel legs on the route map already use real MRT line colours: carry that language to the steps list.</p>
+          <div class="spec"><span class="spec-label">sketch</span>
+            <div class="legs"><span class="pill ghost">walk</span>→<span class="pill" style="--c:var(--ew)">EW</span>→<span class="pill" style="--c:#5b6573">bus</span>→<span class="pill ghost">walk</span></div>
+          </div>
+        </li>
+        <li class="stn">
+          <div class="head"><span class="code" style="--c:var(--ew)">MM10</span></div>
+          <p class="idea-text">The home marker is the origin station: “You are here” ring.</p>
+        </li>
+        <li class="stn ix">
+          <div class="head"><span class="code" style="--c:var(--ew)">MM11</span></div>
+          <p class="idea-text">Interchange rings mark schools that are in the six on the map.</p>
+          <div class="spec"><span class="spec-label">MM10 + MM11</span>
+            <div class="marker"><span><i class="ring1"></i>You are here</span><span><i class="ring2"></i>In your six</span></div>
+          </div>
+        </li>
+        <li class="stn">
+          <div class="head"><span class="code" style="--c:var(--ew)">MM12</span></div>
+          <p class="idea-text">Route summary as a mini line: walk · EW · bus · walk segments drawn proportionally to time.</p>
+          <div class="spec"><span class="spec-label">sketch</span>
+            <div class="route" aria-hidden="true"><i style="flex:1;background:repeating-linear-gradient(90deg,#8d8574 0 4px,transparent 4px 7px)"></i><i style="flex:5;background:var(--ew)"></i><i style="flex:2.5;background:#5b6573"></i><i style="flex:1;background:repeating-linear-gradient(90deg,#8d8574 0 4px,transparent 4px 7px)"></i></div>
+            <div class="route-l"><span style="flex:1">walk</span><span style="flex:5">EW</span><span style="flex:2.5">bus</span><span style="flex:1">walk</span></div>
+            <p class="cap">Widths here are only illustrative.</p>
+          </div>
+        </li>
+        <li class="stn">
+          <div class="head"><span class="code" style="--c:var(--ew)">MM13</span></div>
+          <p class="idea-text">Station-name typography: bold, condensed width for the current step, like platform signage.</p>
+          <div class="spec"><span class="spec-label">sketch</span>
+            <div class="platform"><span class="now">About you</span><span class="other">the other steps stay quiet</span></div>
+          </div>
+        </li>
+        <li class="stn">
+          <div class="head"><span class="code" style="--c:var(--ew)">MM14</span></div>
+          <p class="idea-text">Platform screen door metaphor: steps slide open sideways when moving forward.</p>
+          <div class="spec"><span class="spec-label">try it</span>
+            <div class="doors" id="doors"><div class="behind">Next step</div><div class="p l"></div><div class="p r"></div></div>
+            <p style="margin:10px 0 0"><button class="btn" id="doorbtn" aria-controls="doors" aria-pressed="false">Move forward</button></p>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PERSONA JOURNEY ================= -->
+<section class="tech" id="pj">
+  <div class="wrap">
+    <div class="psign" style="--c:var(--dt)">
+      <div class="bar"></div>
+      <div class="in">
+        <div class="row"><span class="code" style="--c:var(--dt)">PJ</span><span class="lname">Line 2 · Technique</span></div>
+        <h2>Persona Journey</h2>
+        <p class="prompt">Two passengers, one line: <em>the P6 student on results day</em>, then <em>the parent at night</em>.</p>
+      </div>
+    </div>
+
+    <div class="tracks">
+      <div class="track day">
+        <div class="sun" aria-hidden="true"></div>
+        <h3>The student</h3>
+        <p class="sub">Results day, by daylight</p>
+        <ol class="line" style="--c:var(--dt)">
+          <li class="stn">
+            <div class="head"><span class="code" style="--c:var(--dt)">PJ1</span></div>
+            <p class="idea-text">The first thing they want is “what does my score mean” in one big, proud number, not a form.</p>
+          </li>
+          <li class="stn">
+            <div class="head"><span class="code" style="--c:var(--dt)">PJ2</span></div>
+            <p class="idea-text">Make the AL total feel like a reveal: the digits roll into place when the fourth subject is picked.</p>
+            <div class="spec"><span class="spec-label">PJ1 + PJ2</span>
+              <div class="scorecard"><span class="lab">AL<br>TOTAL</span>
+                <div class="drums" id="drums" aria-hidden="true">
+                  <div class="drum roll"><div class="col"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>–</span></div></div>
+                  <div class="drum roll d2"><div class="col"><span>9</span><span>8</span><span>7</span><span>6</span><span>5</span><span>4</span><span>3</span><span>2</span><span>1</span><span>0</span><span>–</span></div></div>
+                </div>
+              </div>
+              <p class="cap">The digits land on a blank here: the real score is the student’s own.</p>
+              <p style="margin:8px 0 0"><button class="btn" id="rollbtn">Pick the fourth subject</button></p>
+            </div>
+          </li>
+          <li class="stn">
+            <div class="head"><span class="code" style="--c:var(--dt)">PJ3</span></div>
+            <p class="idea-text">17 interest chips with small drawn icons feel like choosing a character’s skills.</p>
+            <div class="spec"><span class="spec-label">17 chips</span><div class="chips" id="chips" aria-label="Seventeen chip shapes"></div></div>
+          </li>
+          <li class="stn">
+            <div class="head"><span class="code" style="--c:var(--dt)">PJ4</span></div>
+            <p class="idea-text">Celebrate small wins without confetti: a check that draws, a count that ticks.</p>
+            <div class="spec"><span class="spec-label">try it</span>
+              <div class="win" id="win">
+                <svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="21" fill="none" stroke="#005ec4" stroke-width="4"/><path class="ck" d="M14 25 l7 7 l13 -15" fill="none" stroke="#13202d" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span class="tick" id="tick">1</span>
+                <button class="btn" id="winbtn">Small win</button>
+              </div>
+            </div>
+          </li>
+          <li class="stn">
+            <div class="head"><span class="code" style="--c:var(--dt)">PJ5</span></div>
+            <p class="idea-text">The school list should feel like browsing, with the nearest and best-matched first, not a spreadsheet.</p>
+          </li>
+          <li class="stn">
+            <div class="head"><span class="code" style="--c:var(--dt)">PJ6</span></div>
+            <p class="idea-text">“You and Boon Lay”: a personal line on each school page, comparing you to the school in one sentence.</p>
+            <div class="spec you-school"><span class="spec-label">sketch</span><h4>You and Boon Lay</h4><span class="skel" style="width:90%"></span></div>
+          </li>
+          <li class="stn">
+            <div class="head"><span class="code" style="--c:var(--dt)">PJ12</span></div>
+            <p class="idea-text">The app speaks to them as “you”, never as “the child”.</p>
+            <div class="spec"><span class="spec-label">voice</span><div class="voice"><span>you</span><span class="no">the child</span></div></div>
+          </li>
+          <li class="stn">
+            <div class="head"><span class="code" style="--c:var(--dt)">PJ13</span></div>
+            <p class="idea-text">Big tap targets and a thumb-reach primary action bar on phone in setup.</p>
+          </li>
+        </ol>
+      </div>
+
+      <div class="track night on-night">
+        <div class="stars" aria-hidden="true"></div>
+        <div class="moon" aria-hidden="true"></div>
+        <h3>The parent</h3>
+        <p class="sub">The same day, after dinner</p>
+        <ol class="line" style="--c:#6fa3d8">
+          <li class="stn">
+            <div class="head"><span class="code" style="--c:var(--dt)">PJ7</span></div>
+            <p class="idea-text">Wants calm, credible, official-feeling, with sources visible.<span class="src">Source</span></p>
+          </li>
+          <li class="stn">
+            <div class="head"><span class="code" style="--c:var(--dt)">PJ8</span></div>
+            <p class="idea-text">Wants a one-page summary to discuss at dinner: a printed “ticket” of the six with codes.</p>
+            <div class="spec"><span class="spec-label">sketch</span>
+              <div class="miniticket"><div class="a">MY SIX<br>1 ···· &nbsp;2 ····<br>3 ···· &nbsp;4 ····<br>5 ···· &nbsp;6 ····</div><div class="b">PRINT<br>FOR<br>DINNER</div></div>
+            </div>
+          </li>
+          <li class="stn">
+            <div class="head"><span class="code" style="--c:var(--dt)">PJ9</span></div>
+            <p class="idea-text">Wants to know the commute is safe and short: travel shown before everything else on mobile.</p>
+            <div class="spec"><span class="spec-label">PJ9 + PJ13</span>
+              <div class="phones">
+                <div class="phone" aria-label="Phone sketch: travel first"><div class="blk travel">TRAVEL FIRST</div><div class="blk"></div><div class="blk" style="width:70%"></div></div>
+                <div class="phone" aria-label="Phone sketch: thumb-reach action bar"><div class="blk"></div><div class="blk" style="width:60%"></div><div class="bar">Big thumb button</div></div>
+              </div>
+            </div>
+          </li>
+          <li class="stn">
+            <div class="head"><span class="code" style="--c:var(--dt)">PJ10</span></div>
+            <p class="idea-text">Reassurance copy at each step: “You can change this later.”</p>
+            <div class="spec"><span class="spec-label">copy</span><span class="reassure">✓ You can change this later.</span></div>
+          </li>
+          <li class="stn">
+            <div class="head"><span class="code" style="--c:var(--dt)">PJ14</span></div>
+            <p class="idea-text">A quiet “why this matters” line under every decision.</p>
+            <div class="spec"><span class="spec-label">sketch</span><span class="skel" style="width:70%;background:#3a5068;height:12px"></span><p class="why">Why this matters: <span class="skel" style="display:inline-block;width:50%;vertical-align:middle;background:#3a5068;margin:0"></span></p></div>
+          </li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="both">
+      <div class="ix-big" aria-hidden="true"></div>
+      <div>
+        <h3><span class="code" style="--c:var(--dt)">PJ11</span> Interchange · both passengers · </h3>
+        <p class="idea-text" style="margin:6px 0 0">A sense of progress across sessions: “Welcome back, 3 of 6 chosen” on the start page.</p>
+        <div class="welcome"><span>Welcome back, 3 of 6 chosen</span><span class="six" aria-hidden="true"><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i><i></i></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CROSS-POLLINATION ================= -->
+<section class="tech" id="cp">
+  <div class="wrap">
+    <div class="psign" style="--c:var(--cc)">
+      <div class="bar"></div>
+      <div class="in">
+        <div class="row"><span class="code dark-t" style="--c:var(--cc)">CP</span><span class="lname">Line 3 · Circle line</span></div>
+        <h2>Cross-Pollination</h2>
+        <p class="prompt">How would <em>a travel app</em>, <em>a game</em> and <em>a music app</em> make this feel great? The circle line picked up passengers from eight kinds of app.</p>
+      </div>
+    </div>
+
+    <div class="cp-grid">
+      <div class="circle">
+        <svg viewBox="-55 0 490 380" role="img" aria-labelledby="cpt">
+          <title id="cpt">A circle line with eight stations, one for each kind of app borrowed from, around S1 Compass at the centre.</title>
+          <circle cx="190" cy="190" r="130" fill="none" stroke="#fa9e0d" stroke-width="12"/>
+          <g id="cp-stations" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#13202d"></g>
+          <circle cx="190" cy="190" r="44" fill="#13202d"/>
+          <text x="190" y="186" text-anchor="middle" font-family="Arial Narrow, Arial, sans-serif" font-size="15" font-weight="800" fill="#fff">S1</text>
+          <text x="190" y="203" text-anchor="middle" font-family="Arial Narrow, Arial, sans-serif" font-size="13" font-weight="800" fill="#fff">Compass</text>
+        </svg>
+      </div>
+
+      <div class="transfers">
+        <div class="xfer">
+          <h3><span class="n">1</span>Travel booking</h3>
+          <ul><li>
+            <div class="head"><span class="code dark-t" style="--c:var(--cc)">CP1</span> </div>
+            <p class="idea-text">A boarding-pass style summary for My six with tear line, codes in mono, and a QR-free “gate” (the submission deadline).</p>
+            <div class="spec" style="margin-top:10px"><span class="spec-label">sketch</span>
+              <div class="bpass"><div class="main"><div class="k">My six</div><div class="codes"><span>····</span><span>····</span><span>····</span><span>····</span><span>····</span><span>····</span></div></div><div class="stub"><div class="k">Gate</div><div class="v">Submission deadline</div></div></div>
+            </div>
+          </li></ul>
+        </div>
+
+        <div class="xfer">
+          <h3><span class="n">2</span>Travel app</h3>
+          <ul>
+            <li>
+              <div class="head"><span class="code dark-t" style="--c:var(--cc)">CP2</span> </div>
+              <p class="idea-text">“Your trip so far” breadcrumb, then a confident next step button that changes with context.</p>
+              <div class="spec" style="margin-top:10px"><span class="spec-label">sketch</span><div class="crumbs"><span>Your trip so far</span>›<span>····</span>›<span>····</span><span class="go">Next step →</span></div></div>
+            </li>
+            <li class="rejected">
+              <div class="head"><span class="code dark-t" style="--c:var(--cc)">CP10</span>  <span class="rej-tag">Rejected</span></div>
+              <p class="idea-text">Anticipatory card: “Most students in Posting Group 2 near you also looked at…”</p>
+              <p class="why-rej">Rejected: no data on other students; never invent.</p>
+            </li>
+          </ul>
+        </div>
+
+        <div class="xfer wide">
+          <h3><span class="n">3</span>Game</h3>
+          <ul>
+            <li>
+              <div class="head"><span class="code dark-t" style="--c:var(--cc)">CP3</span> </div>
+              <p class="idea-text">Unlock feel: the school list opens with a short count-up of how many schools are open to you.</p>
+            </li>
+            <li>
+              <div class="head"><span class="code dark-t" style="--c:var(--cc)">CP4</span> </div>
+              <p class="idea-text">A progress meter in the nav that fills as the list reaches six.</p>
+            </li>
+            <li>
+              <div class="head"><span class="code dark-t" style="--c:var(--cc)">CP9</span> </div>
+              <p class="idea-text">Achievements as quiet badges: “Two safer choices”, “All within 45 min”.</p>
+              <div class="badges" style="margin-top:8px"><span class="badge">Two safer choices</span><span class="badge">All within 45 min</span></div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="xfer">
+          <h3><span class="n">4</span>Music app (year-end recap)</h3>
+          <ul>
+            <li>
+              <div class="head"><span class="code dark-t" style="--c:var(--cc)">CP5</span> </div>
+              <p class="idea-text">A “your six at a glance” card with big numbers: nearest trip, safest margin, interests matched.</p>
+              <div class="spec" style="margin-top:10px"><span class="spec-label">sketch</span><div class="recap"><div><b>··</b>nearest trip</div><div><b>··</b>safest margin</div><div><b>··</b>interests matched</div></div></div>
+            </li>
+            <li>
+              <div class="head"><span class="code dark-t" style="--c:var(--cc)">CP6</span> </div>
+              <p class="idea-text">A gentle grain gradient behind the hero preview, like album art.</p>
+            </li>
+          </ul>
+        </div>
+
+        <div class="xfer">
+          <h3><span class="n">5</span>Food delivery</h3>
+          <ul><li>
+            <div class="head"><span class="code dark-t" style="--c:var(--cc)">CP7</span> </div>
+            <p class="idea-text">Live status line (“Working out travel times…”) as a moving dot along a line, not a spinner.</p>
+            <div class="spec" style="margin-top:10px"><span class="spec-label">live</span><div class="dotline" aria-hidden="true"><i></i></div><p class="cap" style="margin:0;color:var(--ink);font-size:14px">Working out travel times…</p></div>
+          </li></ul>
+        </div>
+
+        <div class="xfer">
+          <h3><span class="n">6</span>Map apps</h3>
+          <ul><li>
+            <div class="head"><span class="code dark-t" style="--c:var(--cc)">CP8</span> </div>
+            <p class="idea-text">Smooth fly-to when a school is picked on the map.</p>
+          </li></ul>
+        </div>
+
+        <div class="xfer">
+          <h3><span class="n">7</span>Weather app</h3>
+          <ul><li>
+            <div class="head"><span class="code dark-t" style="--c:var(--cc)">CP11</span> </div>
+            <p class="idea-text">One big glanceable “today” panel: on My six, the overall balance as a single sentence and colour bar.</p>
+            <div class="spec" style="margin-top:10px"><span class="spec-label">sketch</span><span class="skel" style="width:80%;height:12px"></span><div class="balance" aria-hidden="true"><i style="flex:2;background:var(--stricter)"></i><i style="flex:2;background:var(--close)"></i><i style="flex:2;background:var(--better)"></i></div></div>
+          </li></ul>
+        </div>
+
+        <div class="xfer">
+          <h3><span class="n">8</span>Fitness app</h3>
+          <ul><li>
+            <div class="head"><span class="code dark-t" style="--c:var(--cc)">CP12</span> </div>
+            <p class="idea-text">Rings that close: the six slots as a ring that closes when complete.</p>
+            <div class="spec" style="margin-top:10px"><span class="spec-label">try it</span>
+              <div class="ringwrap">
+                <svg viewBox="0 0 84 84" id="ring" aria-hidden="true"></svg>
+                <div><div id="ringtxt" style="font-weight:700;margin-bottom:6px">0 of 6</div><button class="btn" id="ringbtn">Add a choice</button></div>
+              </div>
+            </div>
+          </li></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= REVERSE BRAINSTORMING ================= -->
+<section class="tech" id="rb">
+  <div class="wrap">
+    <div class="psign" style="--c:var(--ns)">
+      <div class="bar"></div>
+      <div class="in">
+        <div class="row"><span class="code" style="--c:var(--ns)">RB</span><span class="lname">Line 4 · Technique</span></div>
+        <h2>Reverse Brainstorming</h2>
+        <p class="prompt">How could this feel <em>cheap, scary or boring</em> to a 12-year-old? Then invert.</p>
+      </div>
+    </div>
+
+    <div class="board" role="note"><b>■ SERVICE NOTICE</b> &nbsp;Ten ways to break the ride were reported. Each one has a points switch that sends it the other way.</div>
+
+    <ol class="disruptions">
+      <li class="dis"><div class="f"><div class="lbl"><span>Fail</span><span class="code" style="--c:var(--ns)">RB1</span></div><p>A wall of grey filters before any school.</p></div><div class="sw" aria-hidden="true"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" fill="#fff" stroke="#13202d" stroke-width="3"/><path d="M12 20h15m-5-6 6 6-6 6" fill="none" stroke="#13202d" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="i"><div class="lbl"><span>Invert</span></div><p>Show schools first, tools tucked away (done on phone; extend with a “best next step” card).</p></div></li>
+      <li class="dis"><div class="f"><div class="lbl"><span>Fail</span><span class="code" style="--c:var(--ns)">RB2</span></div><p>Red “Stricter” everywhere reads as failing.</p></div><div class="sw" aria-hidden="true"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" fill="#fff" stroke="#13202d" stroke-width="3"/><path d="M12 20h15m-5-6 6 6-6 6" fill="none" stroke="#13202d" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="i"><div class="lbl"><span>Invert</span></div><p>Frame stricter schools as “stretch” choices with a calm colour and the line strip, keep the honest label.</p></div></li>
+      <li class="dis"><div class="f"><div class="lbl"><span>Fail</span><span class="code" style="--c:var(--ns)">RB3</span></div><p>Generic stock icons.</p></div><div class="sw" aria-hidden="true"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" fill="#fff" stroke="#13202d" stroke-width="3"/><path d="M12 20h15m-5-6 6 6-6 6" fill="none" stroke="#13202d" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="i"><div class="lbl"><span>Invert</span></div><p>A small custom line-icon set drawn on the same 20px grid for interests and steps.</p></div></li>
+      <li class="dis"><div class="f"><div class="lbl"><span>Fail</span><span class="code" style="--c:var(--ns)">RB4</span></div><p>Every page looks the same.</p></div><div class="sw" aria-hidden="true"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" fill="#fff" stroke="#13202d" stroke-width="3"/><path d="M12 20h15m-5-6 6 6-6 6" fill="none" stroke="#13202d" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="i"><div class="lbl"><span>Invert</span></div><p>Each step gets its own treatment: score = big numerals, group = ticket choice, home = map, interests = chip board, list = browsing, six = line.</p></div></li>
+      <li class="dis"><div class="f"><div class="lbl"><span>Fail</span><span class="code" style="--c:var(--ns)">RB5</span></div><p>Silent waiting.</p></div><div class="sw" aria-hidden="true"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" fill="#fff" stroke="#13202d" stroke-width="3"/><path d="M12 20h15m-5-6 6 6-6 6" fill="none" stroke="#13202d" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="i"><div class="lbl"><span>Invert</span></div><p>Every wait has a moving line and words saying what is happening.</p></div></li>
+      <li class="dis"><div class="f"><div class="lbl"><span>Fail</span><span class="code" style="--c:var(--ns)">RB6</span></div><p>The app reacts only after the student acts.</p></div><div class="sw" aria-hidden="true"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" fill="#fff" stroke="#13202d" stroke-width="3"/><path d="M12 20h15m-5-6 6 6-6 6" fill="none" stroke="#13202d" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="i"><div class="lbl"><span>Invert</span></div><p>Suggest the next action before they look for it (one step ahead card on every main screen).</p></div></li>
+      <li class="dis"><div class="f"><div class="lbl"><span>Fail</span><span class="code" style="--c:var(--ns)">RB7</span></div><p>The end has no payoff.</p></div><div class="sw" aria-hidden="true"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" fill="#fff" stroke="#13202d" stroke-width="3"/><path d="M12 20h15m-5-6 6 6-6 6" fill="none" stroke="#13202d" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="i"><div class="lbl"><span>Invert</span></div><p>My six as the climax, a line diagram and a shareable ticket.</p></div></li>
+      <li class="dis"><div class="f"><div class="lbl"><span>Fail</span><span class="code" style="--c:var(--ns)">RB8</span></div><p>Jargon labels.</p></div><div class="sw" aria-hidden="true"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" fill="#fff" stroke="#13202d" stroke-width="3"/><path d="M12 20h15m-5-6 6 6-6 6" fill="none" stroke="#13202d" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="i"><div class="lbl"><span>Invert</span></div><p>Plain words and a “why” line.</p></div></li>
+      <li class="dis"><div class="f"><div class="lbl"><span>Fail</span><span class="code" style="--c:var(--ns)">RB9</span></div><p>Flat white page with no warmth.</p></div><div class="sw" aria-hidden="true"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" fill="#fff" stroke="#13202d" stroke-width="3"/><path d="M12 20h15m-5-6 6 6-6 6" fill="none" stroke="#13202d" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="i"><div class="lbl"><span>Invert</span></div><p>A soft tinted ground band behind step heroes, and the brand ring mark used as the progress station.</p></div></li>
+      <li class="dis"><div class="f"><div class="lbl"><span>Fail</span><span class="code" style="--c:var(--ns)">RB10</span></div><p>Motion that distracts.</p></div><div class="sw" aria-hidden="true"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" fill="#fff" stroke="#13202d" stroke-width="3"/><path d="M12 20h15m-5-6 6 6-6 6" fill="none" stroke="#13202d" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="i"><div class="lbl"><span>Invert</span></div><p>Motion only on load, on a click, or for the dealt moments; reduced motion rests everything.</p></div></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ================= SENSORY EXPLORATION ================= -->
+<section class="tech" id="se">
+  <div class="wrap">
+    <div class="psign" style="--c:var(--te)">
+      <div class="bar"></div>
+      <div class="in">
+        <div class="row"><span class="code" style="--c:var(--te)">SE</span><span class="lname">Line 5 · Technique</span></div>
+        <h2>Sensory Exploration</h2>
+        <p class="prompt">What does a <em>calm, confident results day</em> look, sound and feel like?</p>
+      </div>
+    </div>
+
+    <div class="senses">
+      <div class="sense">
+        <h3><svg viewBox="0 0 28 28" aria-hidden="true"><path d="M2 14s4.5-8 12-8 12 8 12 8-4.5 8-12 8S2 14 2 14z"/><circle cx="14" cy="14" r="4"/></svg>Look</h3>
+        <div class="tile">
+          <div class="head"><span class="code" style="--c:var(--te)">SE1</span> </div>
+          <p class="idea-text">Wide, confident numerals (Mona Sans at 115 to 125 width) for every score and count.</p>
+          <div class="spec"><span class="spec-label">mood</span><div class="wide-num">115–125<small>width</small></div><p class="cap">Drawn here with a system font; the idea names Mona Sans.</p></div>
+        </div>
+        <div class="tile">
+          <div class="head"><span class="code" style="--c:var(--te)">SE3</span> </div>
+          <p class="idea-text">Paper-like warmth: a very light grain on the hero frame only (the one effect).</p>
+          <div class="spec"><span class="spec-label">swatch</span><div class="grainswatch" aria-hidden="true"></div></div>
+        </div>
+        <div class="tile">
+          <div class="head"><span class="code" style="--c:var(--te)">SE6</span> </div>
+          <p class="idea-text">Singapore town names as texture: the marquee of towns on the start page.</p>
+          <div class="spec"><span class="spec-label">texture</span>
+            <div class="marquee" aria-hidden="true"><div class="trk" id="towns"></div></div>
+          </div>
+        </div>
+        <div class="tile">
+          <div class="head"><span class="code" style="--c:var(--te)">SE7</span> </div>
+          <p class="idea-text">The island outline as a recurring motif behind empty states.</p>
+          <div class="spec island"><span class="spec-label">motif</span>
+            <svg viewBox="0 0 220 110" aria-hidden="true"><path d="M14 58c6-12 20-18 34-20 10-2 16-10 28-11 14-1 22 4 36 2 16-2 26-9 44-7 14 2 22 9 34 14 10 4 18 8 18 16 0 9-11 13-22 17-12 4-20 12-36 13-14 1-22-5-36-4-16 1-26 8-42 6-14-2-22-9-36-11-10-1-20-4-24-11-2-4 0-8 2-14z" fill="none" stroke="#9d5b25" stroke-width="3" stroke-dasharray="2 6" stroke-linecap="round"/></svg>
+            <p>Nothing here yet.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="sense">
+        <h3><svg viewBox="0 0 28 28" aria-hidden="true"><path d="M9 14V5.5a2 2 0 0 1 4 0V13m0-2.5a2 2 0 0 1 4 0V13m0-1.5a2 2 0 0 1 4 0V18c0 4-3 7-7 7h-1c-3 0-5-1.5-6.5-4L4 15.5a2 2 0 0 1 3.4-2L9 15"/></svg>Feel</h3>
+        <div class="tile">
+          <div class="head"><span class="code" style="--c:var(--te)">SE2</span> </div>
+          <p class="idea-text">Buttons that press and spring back; chips that fill with ink when chosen (already); a subtle bounce-free settle.</p>
+          <div class="spec"><span class="spec-label">press it</span><button class="btn">Press me</button></div>
+        </div>
+        <div class="tile">
+          <div class="head"><span class="code" style="--c:var(--te)">SE5</span> </div>
+          <p class="idea-text">The score card as a solid object with depth: a raised card that the number lands on.</p>
+          <p class="cap" style="font-size:14px;color:var(--muted);margin:6px 0 0">See the raised card under PJ2.</p>
+        </div>
+        <div class="tile">
+          <div class="head"><span class="code" style="--c:var(--te)">SE8</span> </div>
+          <p class="idea-text">Page changes slide 8px and fade in 220ms, never flash.</p>
+          <div class="spec"><span class="spec-label">try it</span>
+            <div class="slidebox"><div class="pg" id="pg">Page 1</div></div>
+            <p style="margin:10px 0 0"><button class="btn" id="pgbtn">Change page</button></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="sense">
+        <h3><svg viewBox="0 0 28 28" aria-hidden="true"><path d="M4 11h4l6-5v16l-6-5H4z"/><path d="M19 10l6 8m0-8l-6 8"/></svg>Sound</h3>
+        <div class="tile rejected">
+          <div class="head"><span class="code" style="--c:var(--te)">SE4</span>  <span class="rej-tag">Rejected</span></div>
+          <div class="mute" style="margin-top:8px">
+            <svg viewBox="0 0 44 44" aria-hidden="true"><path d="M6 17h7l9-7v24l-9-7H6z"/><path d="M29 17l9 10m0-10l-9 10"/></svg>
+            <p class="idea-text" style="margin:0">Sound.</p>
+          </div>
+          <p class="why-rej">Rejected: no audio in a planning tool used at home late at night.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SYNTHESIS: YOUR LINE ================= -->
+<section class="climax on-night" id="yl">
+  <div class="wrap">
+    <p class="kick">Interchange</p>
+    <h2>All five lines<br>become <span class="rainbow">your line</span>.</h2>
+    <p class="lede">Fifty-eight stations later, three insights joined the lines into one route, and the session decided what to build.</p>
+
+    <div class="ins">
+      <div class="num">Insight 1</div>
+      <div>
+        <h3>Three ideas are one idea in three hats.</h3>
+        <p>The stepper station line, the school card line strip and the My six line diagram are one MRT-line visual language running through the whole flow. It is local, readable by a 12-year-old, and it doubles as the travel theme.</p>
+        <div class="merge">
+          <span style="color:#7fe0a8">Stepper station line</span>
+          <span style="color:#8fc0ff">School card line strip</span>
+          <span style="color:#ffc061">My six line diagram</span>
+          <svg viewBox="0 0 300 120" aria-hidden="true">
+            <path d="M50 0 C50 45,150 35,150 72" fill="none" stroke="#009645" stroke-width="9" stroke-linecap="round"/>
+            <path d="M150 0 V72" fill="none" stroke="#3b8be8" stroke-width="9" stroke-linecap="round"/>
+            <path d="M250 0 C250 45,150 35,150 72" fill="none" stroke="#fa9e0d" stroke-width="9" stroke-linecap="round"/>
+            <path d="M150 72 V120" stroke="#fff" stroke-width="16"/>
+            <circle cx="150" cy="72" r="16" fill="#0f1a26" stroke="#fff" stroke-width="6"/>
+          </svg>
+          <span class="out">One MRT-line visual language</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="ins">
+      <div class="num">Insight 2</div>
+      <div>
+        <h3>One step ahead is a single “next step” component.</h3>
+        <p>It reads the state and offers the one best action. Tap a state to see the component read it.</p>
+        <div class="states" id="states" role="group" aria-label="States the next step component reads">
+          <button aria-pressed="true">no score</button><button aria-pressed="false">no home</button><button aria-pressed="false">nothing saved</button><button aria-pressed="false">under six</button><button aria-pressed="false">no safer choice</button><button aria-pressed="false">complete</button>
+        </div>
+        <div class="nextcard" aria-live="polite">
+          <div class="ring" aria-hidden="true"></div>
+          <div><small>Next step · reads “<span id="stateName">no score</span>”</small><b>The one best action for this state</b></div>
+        </div>
+        <div class="where"><em style="font-style:normal;align-self:center;color:#b8c4d0">Shown on</em><span>START</span><span>LIST</span><span>MY SIX</span></div>
+      </div>
+    </div>
+
+    <div class="ins">
+      <div class="num">Insight 3 · Climax</div>
+      <div>
+        <h3>My six becomes “Your line”.</h3>
+        <p>A drawn line with six stations coloured by band, a balance sentence, and a printable ticket for parents with the codes.</p>
+      </div>
+    </div>
+
+    <div class="yourline" id="yourline">
+      <div class="yl-controls">
+        <button class="btn" id="placebtn">Place station 1</button>
+        <button class="btn" id="resetbtn" hidden>Start again</button>
+      </div>
+      <div class="yl-track" id="yltrack">
+        <div class="rail"></div><div class="fill"></div>
+      </div>
+      <p class="yl-msg" aria-live="polite" id="ylmsg"></p>
+      <div class="yl-legend"><span style="--b:var(--stricter)"><i></i>stricter (a “stretch” choice)</span><span style="--b:var(--close)"><i></i>close</span><span style="--b:var(--better)"><i></i>better than both</span><span>Colours in this demo are an example only.</span></div>
+
+      <div class="yl-out">
+        <div class="panel">
+          <h4>Balance at a glance</h4>
+          <p class="sentence" id="balanceText">No stations placed yet.</p>
+          <div class="balance" id="balanceBar" aria-hidden="true"></div>
+        </div>
+        <div class="ticket">
+          <div class="main">
+            <div class="k">Printable ticket · for parents</div>
+            <p class="t">Your line</p>
+            <ol><li>···· ····</li><li>···· ····</li><li>···· ····</li><li>···· ····</li><li>···· ····</li><li>···· ····</li></ol>
+          </div>
+          <div class="stub"><div><div class="k">Terminus</div><b>Posting results</b></div><div><div class="k">Codes</div>in mono</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="decision">
+      <p class="kick">Decision</p>
+      <h3>Converge on ten stops</h3>
+      <ol class="route-final">
+        <li><b>Line motif tokens and components</b></li>
+        <li><b>Start page</b><span>Grain-gradient hero frame, count-up facts, town marquee, liquid-type statement.</span></li>
+        <li><b>Station-line stepper with next stop</b></li>
+        <li><b>Score reveal</b><span>Rolling digits and a posting-group ticket.</span></li>
+        <li><b>Interest chips with drawn icons</b></li>
+        <li><b>Next-step guide card</b></li>
+        <li><b>School cards with band line strip</b></li>
+        <li><b>“You and this school” line on school pages</b></li>
+        <li><b>Your line diagram on My six</b><span>With completion draw and a ticket print.</span></li>
+        <li><b>View transitions</b></li>
+      </ol>
+
+      <div class="closed">
+        <h4><span class="rej-tag">Not in service</span> Rejected at the decision</h4>
+        <ul>
+          <li><b>Audio</b><span>No audio in a planning tool used at home late at night.</span></li>
+          <li><b>Invented peer data</b><span>No data on other students; never invent.</span></li>
+          <li><b>Confetti</b><span>Small wins are celebrated without confetti: a check that draws, a count that ticks.</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap"><i aria-hidden="true"></i><span>From a BMad brainstorming session on 2026-11-24 · S1 Compass look and feel.</span></div>
+</footer>
+
+<script>
+(function(){
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var NS = 'http://www.w3.org/2000/svg';
+  function el(tag, attrs){ var e=document.createElementNS(NS,tag); for(var k in attrs) e.setAttribute(k,attrs[k]); return e; }
+
+  /* ----- system map: one dot per idea, hollow red for rejected ----- */
+  var lines = [
+    {code:'MM', c:'#009645', n:14, rej:[]},
+    {code:'PJ', c:'#005ec4', n:14, rej:[]},
+    {code:'CP', c:'#fa9e0d', n:12, rej:[10], dark:true},
+    {code:'RB', c:'#d42e12', n:10, rej:[]},
+    {code:'SE', c:'#9d5b25', n:8,  rej:[4]}
+  ];
+  var g = document.getElementById('sm-lines');
+  lines.forEach(function(L,i){
+    var y = 30 + i*42;
+    var p = el('path',{d:'M58 '+y+' H250 C 310 '+y+', 300 115, 360 115', fill:'none', stroke:L.c, 'stroke-width':9, 'stroke-linecap':'round'});
+    g.appendChild(p);
+    g.appendChild(el('rect',{x:8,y:y-11,width:42,height:22,rx:5,fill:L.c}));
+    var t = el('text',{x:29,y:y+5,'text-anchor':'middle','font-family':'Arial Narrow, Arial, sans-serif','font-weight':800,'font-size':14,fill:L.dark?'#13202d':'#fff'});
+    t.textContent = L.code; g.appendChild(t);
+    var span = 240-70, step = span/(L.n-1);
+    for(var k=1;k<=L.n;k++){
+      var x = 70 + (k-1)*step, r = L.rej.indexOf(k)>-1;
+      g.appendChild(el('circle',{cx:x,cy:y,r:r?4.6:3.2,fill:r?'#fff':'#fff',stroke:r?'#8a1c0c':'none','stroke-width':r?3:0}));
+    }
+  });
+
+  /* ----- sticky strip: current and next stop ----- */
+  var order = [['mm','Metaphor Mapping'],['pj','Persona Journey'],['cp','Cross-Pollination'],['rb','Reverse Brainstorming'],['se','Sensory Exploration'],['yl','Your line']];
+  var links = document.querySelectorAll('.strip a');
+  var nsK = document.getElementById('ns-k'), nsV = document.getElementById('ns-v');
+  function setCurrent(idx){
+    links.forEach(function(a,i){
+      a.classList.toggle('done', i<=idx && idx>-1);
+      if(i===idx) a.setAttribute('aria-current','step'); else a.removeAttribute('aria-current');
+    });
+    if(idx<0){ nsK.textContent='Next stop'; nsV.textContent=order[0][1]; }
+    else if(idx===order.length-1){ nsK.textContent='Terminus'; nsV.textContent='Your line'; }
+    else { nsK.textContent='Now: '+order[idx][1]+' · Next stop'; nsV.textContent=order[idx+1][1]; }
+  }
+  function update(){
+    var mid = window.innerHeight*0.35, idx=-1;
+    order.forEach(function(o,i){ var s=document.getElementById(o[0]); if(s && s.getBoundingClientRect().top < mid) idx=i; });
+    setCurrent(idx);
+  }
+  var ticking=false;
+  window.addEventListener('scroll',function(){ if(!ticking){ ticking=true; requestAnimationFrame(function(){ update(); ticking=false; }); } },{passive:true});
+  window.addEventListener('resize',update); update();
+
+  /* ----- MM14 doors ----- */
+  var doors=document.getElementById('doors'), db=document.getElementById('doorbtn');
+  db.addEventListener('click',function(){ var o=doors.classList.toggle('open'); db.setAttribute('aria-pressed',o); db.textContent=o?'Close the doors':'Move forward'; });
+
+  /* ----- PJ2 rolling digits ----- */
+  document.getElementById('rollbtn').addEventListener('click',function(){
+    document.querySelectorAll('#drums .drum').forEach(function(d){ d.classList.remove('roll'); void d.offsetWidth; d.classList.add('roll'); });
+  });
+
+  /* ----- PJ3 seventeen chips with drawn glyphs ----- */
+  var glyphs=['M3 13l5-9 5 9z','M8 3v10M3 8h10','M4 4h8v8H4z','M8 3a5 5 0 1 0 .01 0','M3 12c3-8 7-8 10 0','M3 8h10M8 3l5 5-5 5','M4 12l8-8M4 4h8v8','M8 2l2 4 4 .5-3 3 1 4-4-2-4 2 1-4-3-3 4-.5z'];
+  var chips=document.getElementById('chips'), on=[1,4,9,13];
+  for(var i=0;i<17;i++){
+    var s=document.createElement('span'); if(on.indexOf(i)>-1) s.className='on';
+    s.innerHTML='<svg viewBox="0 0 16 16"><path d="'+glyphs[i%glyphs.length]+'"/></svg><i style="width:'+(14+(i*7)%16)+'px"></i>';
+    chips.appendChild(s);
+  }
+
+  /* ----- PJ4 small win ----- */
+  var win=document.getElementById('win'), tick=document.getElementById('tick'), count=1;
+  document.getElementById('winbtn').addEventListener('click',function(){
+    win.classList.remove('go'); void win.offsetWidth; win.classList.add('go');
+    count = count>=6 ? 1 : count+1; tick.textContent=count;
+  });
+
+  /* ----- CP circle line stations ----- */
+  var names=['Travel booking','Travel app','Game','Music app','Food delivery','Map apps','Weather app','Fitness app'];
+  var cg=document.getElementById('cp-stations');
+  names.forEach(function(n,i){
+    var a=-Math.PI/2 + i*2*Math.PI/names.length, cx=190+130*Math.cos(a), cy=190+130*Math.sin(a);
+    cg.appendChild(el('circle',{cx:cx,cy:cy,r:13,fill:'#fff',stroke:'#13202d','stroke-width':4}));
+    var num=el('text',{x:cx,y:cy+4.5,'text-anchor':'middle','font-size':12}); num.textContent=i+1; cg.appendChild(num);
+    var lx=190+163*Math.cos(a), ly=190+163*Math.sin(a)+4;
+    var anchor = Math.abs(Math.cos(a))<0.2 ? 'middle' : (Math.cos(a)>0?'start':'end');
+    if(anchor!=='middle'){ lx = 190+150*Math.cos(a); }
+    var lab=el('text',{x:lx,y:ly,'text-anchor':anchor}); lab.textContent=n; cg.appendChild(lab);
+  });
+
+  /* ----- CP12 ring of six slots ----- */
+  var ring=document.getElementById('ring'), segs=[], filled=0;
+  var R=32, C=2*Math.PI*R, gap=5, len=C/6-gap;
+  for(var k=0;k<6;k++){
+    var c=el('circle',{cx:42,cy:42,r:R,fill:'none',stroke:'#e4ddcf','stroke-width':10,'stroke-dasharray':len+' '+(C-len),'stroke-dashoffset':-(k*C/6),class:'seg','stroke-linecap':'butt'});
+    ring.appendChild(c); segs.push(c);
+  }
+  var ringtxt=document.getElementById('ringtxt'), ringbtn=document.getElementById('ringbtn');
+  ringbtn.addEventListener('click',function(){
+    if(filled>=6){ filled=0; segs.forEach(function(s){ s.setAttribute('stroke','#e4ddcf'); }); }
+    else { segs[filled].setAttribute('stroke','#fa9e0d'); filled++; }
+    if(filled===6){ segs.forEach(function(s){ s.setAttribute('stroke','#13202d'); }); ringtxt.textContent='Ring closed: 6 of 6'; ringbtn.textContent='Start again'; }
+    else { ringtxt.textContent=filled+' of 6'; ringbtn.textContent='Add a choice'; }
+  });
+
+  /* ----- SE6 town marquee ----- */
+  var towns=['Ang Mo Kio','Bedok','Bishan','Boon Lay','Bukit Batok','Bukit Panjang','Choa Chu Kang','Clementi','Hougang','Jurong West','Pasir Ris','Punggol','Queenstown','Sembawang','Sengkang','Serangoon','Tampines','Toa Payoh','Woodlands','Yishun'];
+  var trk=document.getElementById('towns');
+  trk.innerHTML = towns.map(function(t){return '<span>'+t+'</span>';}).join('') + towns.map(function(t){return '<span class="dup">'+t+'</span>';}).join('');
+
+  /* ----- SE8 page change ----- */
+  var pg=document.getElementById('pg'), pn=1;
+  document.getElementById('pgbtn').addEventListener('click',function(){
+    pn = pn>=3?1:pn+1; pg.textContent='Page '+pn; pg.classList.remove('in'); void pg.offsetWidth; pg.classList.add('in');
+  });
+
+  /* ----- Insight 2 states ----- */
+  var sb=document.querySelectorAll('#states button'), sn=document.getElementById('stateName');
+  sb.forEach(function(b){ b.addEventListener('click',function(){ sb.forEach(function(x){x.setAttribute('aria-pressed','false');}); b.setAttribute('aria-pressed','true'); sn.textContent=b.textContent; }); });
+
+  /* ----- Climax: Your line ----- */
+  var bandSeq=['stricter','stricter','close','close','better','better'];
+  var bandCol={stricter:'var(--stricter)',close:'var(--close)',better:'var(--better)'};
+  var bandName={stricter:'stricter',close:'close',better:'better than both'};
+  var track=document.getElementById('yltrack'), yl=document.getElementById('yourline');
+  var stops=[];
+  for(var s=0;s<7;s++){
+    var d=document.createElement('div'); d.className='yl-stop'+(s===6?' term':'');
+    d.innerHTML='<span class="dot"></span>'+(s===6?'<b>Posting results</b>':'<b>Choice '+(s+1)+'</b><span>future station</span>');
+    track.appendChild(d); stops.push(d);
+  }
+  var placed=0, pb=document.getElementById('placebtn'), rb=document.getElementById('resetbtn');
+  var bt=document.getElementById('balanceText'), bb=document.getElementById('balanceBar');
+  function renderBalance(){
+    if(!placed){ bt.textContent='No stations placed yet.'; bb.innerHTML=''; return; }
+    var cnt={stricter:0,close:0,better:0};
+    for(var i=0;i<placed;i++) cnt[bandSeq[i]]++;
+    var parts=[]; ['stricter','close','better'].forEach(function(k){ if(cnt[k]) parts.push(cnt[k]+' '+bandName[k]); });
+    bt.textContent = parts.join(' · ') + (placed<6 ? ' · '+(6-placed)+' still to choose' : '');
+    bb.innerHTML = ['stricter','close','better'].map(function(k){ return cnt[k]?'<i style="flex:'+cnt[k]+';background:'+bandCol[k]+'"></i>':''; }).join('') + (placed<6?'<i style="flex:'+(6-placed)+';background:#e4ddcf"></i>':'');
+  }
+  pb.addEventListener('click',function(){
+    if(placed>=6) return;
+    var st=stops[placed]; st.classList.add('placed'); st.style.setProperty('--b',bandCol[bandSeq[placed]]);
+    st.querySelector('span:not(.dot)').textContent=bandName[bandSeq[placed]];
+    placed++; renderBalance();
+    if(placed===6){ yl.classList.add('done'); document.getElementById('ylmsg').textContent='Your line is complete'; pb.hidden=true; rb.hidden=false; rb.focus(); }
+    else pb.textContent='Place station '+(placed+1);
+  });
+  rb.addEventListener('click',function(){
+    placed=0; yl.classList.remove('done'); document.getElementById('ylmsg').textContent='';
+    stops.forEach(function(st,i){ if(i<6){ st.classList.remove('placed'); st.querySelector('span:not(.dot)').textContent='future station'; } });
+    pb.hidden=false; pb.textContent='Place station 1'; rb.hidden=true; pb.focus(); renderBalance();
+  });
+  renderBalance();
+})();
+</script>
+</body>
+</html>
