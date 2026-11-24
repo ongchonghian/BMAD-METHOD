@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en-SG" data-type="software" data-radius="soft" data-buttons="solid" data-motion>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>S1 Compass: plan your Secondary 1 school choices</title>
+<meta name="description" content="Compare your PSLE score with past cut-offs, plan the journey to school with Google Maps and order your six Secondary 1 choices.">
+<meta name="page-type" content="software">
+<meta name="site-kind" content="software">
+<meta name="theme-color" content="#f7f9fa">
+<meta property="og:title" content="S1 Compass">
+<meta property="og:description" content="Plan your six Secondary 1 choices from your PSLE score, your journey and what you enjoy.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mona+Sans:wdth,wght@75..125,400..600&family=Geist+Mono:wght@400..500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/system.css">
+<link rel="stylesheet" href="assets/motion/motion.css">
+<!-- dealt by taste-skill start.mjs: palette cool-white-slate, type mona, radius soft -->
+<style>
+:root {
+  --p-bg: #f7f9fa; --p-surface: #ecf0f2; --p-ink: #1f3038; --p-muted: #5d6b72;
+  --p-accent: #0d7480; --p-accent-ink: #ffffff; --p-action: #0d7480; --p-action-ink: #ffffff;
+  --p-inv-bg: #1f3038; --p-inv-surface: #2c3c44; --p-inv-ink: #f7f9fa; --p-inv-muted: #9ea7ab;
+  --p-inv-accent: #f7f9fa; --p-inv-accent-ink: #1f3038; --p-inv-action: #f7f9fa; --p-inv-action-ink: #1f3038;
+  --font-display: "Mona Sans", system-ui, sans-serif;
+  --font-text: "Mona Sans", system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --display-weight: 500;
+  --display-tracking: -0.03em;
+  --display-tracking-xl: -0.04em;
+  --display-stretch: 104%;
+}
+</style>
+<link rel="stylesheet" href="css/app.css">
+<script>document.documentElement.classList.add('m-enter');setTimeout(()=>document.documentElement.classList.add('m-enter-done'),700)</script>
+<script src="config.js"></script>
+</head>
+<body>
+<header class="nav">
+  <div class="wrap nav__bar">
+    <a class="skip-link" href="#top">Skip to content</a>
+    <a class="nav__logo" href="#/" aria-label="S1 Compass home"><span class="mark" data-mark="ring" aria-hidden="true"></span>S1 Compass</a>
+    <ul class="nav__links" id="nav-links"></ul>
+    <div class="nav__actions" id="nav-actions"></div>
+  </div>
+</header>
+
+<main id="top" class="view"></main>
+
+<nav class="tabbar" id="tabbar" aria-label="Sections"></nav>
+
+<dialog id="settings" class="dialog" aria-labelledby="settings-h">
+  <form method="dialog" class="dialog__body">
+    <h2 id="settings-h" class="t-h3">Map settings</h2>
+    <p>With a Google Maps key the app shows travel times by public transport, the route with each bus and train, and a street map. Without one it still works, with straight-line distances and routes that open in Google Maps.</p>
+    <div class="field">
+      <label for="maps-key">Google Maps API key</label>
+      <input id="maps-key" name="key" type="text" autocomplete="off" spellcheck="false" inputmode="text">
+    </div>
+    <p class="t-small muted" data-key-status role="status"></p>
+    <details class="howto">
+      <summary>How to get a key</summary>
+      <ol>
+        <li>Open the Google Cloud console and create a project with billing turned on.</li>
+        <li>Turn on Maps JavaScript API, Places API (New), Directions API and Distance Matrix API.</li>
+        <li>Create an API key and restrict it to this website's address.</li>
+      </ol>
+      <p class="t-small muted">The key stays in this browser. A site owner can set one for everyone in <code>config.js</code>.</p>
+    </details>
+    <div class="btn-row">
+      <button class="btn btn--primary" type="submit" data-save-key>Save the key</button>
+      <button class="btn btn--secondary" type="button" data-clear-key>Remove the key</button>
+    </div>
+    <hr>
+    <p class="t-small">Your score, home and list are saved in this browser only.</p>
+    <button class="btn btn--secondary btn--sm" type="button" data-reset>Clear my data</button>
+    <button class="icon-btn dialog__close" type="button" data-close aria-label="Close settings"><svg class="i" viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 5.5l9 9M14.5 5.5l-9 9"/></svg></button>
+  </form>
+</dialog>
+
+<div id="toast" class="toast" hidden></div>
+<div id="announcer" class="sr-only" aria-live="polite"></div>
+
+<script type="module" src="assets/motion/motion.js"></script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

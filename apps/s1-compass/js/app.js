@@ -1,0 +1,245 @@
+import * as L from './logic.js';
+import { state, update, subscribe, reset, homeKey } from './store.js';
+import * as maps from './maps.js';
+import { html, icon, toast } from './ui.js';
+import * as startView from './views/start.js';
+import * as setupView from './views/setup.js';
+import * as exploreView from './views/explore.js';
+import * as schoolView from './views/school.js';
+import * as planView from './views/plan.js';
+import * as guideView from './views/guide.js';
+
+const TRAVEL_GOOGLE_LIMIT = window.S1_CONFIG?.travelTimeSchools ?? 60;
+
+// ------------------------------------------------------------------ the shared context every view reads
+
+export const ctx = {
+  data: null,
+  byId: new Map(),
+  weights: {},
+  state,
+  update,
+  travel: { key: '', data: {}, status: 'idle', google: false },
+
+  student() {
+    const p = state.profile;
+    const al = p.mode === 'subjects' ? L.totalAL(p.subjects) : p.total;
+    const groups = L.postingGroups(al, p.mode === 'subjects' ? p.subjects.el : null, p.mode === 'subjects' ? p.subjects.math : null);
+    const pg = groups.groups.includes(p.pg) ? p.pg : groups.groups.length === 1 ? groups.groups[0] : null;
+    return { al, pg, groups, hcl: p.chinese === 'yes' ? p.hcl : 'none', gender: p.gender, primaryId: p.primaryId, home: p.home, interests: p.interests };
+  },
+
+  /** [{ school, option, cmp }] for one school, for the current student. */
+  options(school) {
+    const st = ctx.student();
+    if (!st.pg || !st.al) return [];
+    return L.schoolOptions(school, st.pg).map(option => ({ school, option, cmp: L.compareOption(school, option, st, ctx.data.affiliations) }));
+  },
+
+  choiceByKey(key) {
+    const [id, prog] = key.split('|');
+    const school = ctx.byId.get(id);
+    if (!school) return null;
+    return ctx.options(school).find(c => c.option.prog === prog) || null;
+  },
+
+  planChoices() {
+    return state.plan.choices.map(k => ctx.choiceByKey(k)).filter(Boolean);
+  },
+
+  addChoice(key) {
+    if (state.plan.choices.includes(key)) return;
+    if (state.plan.choices.length >= L.MAX_CHOICES) { toast('You already have six choices. Remove one first.'); return; }
+    update(s => {
+      s.plan.choices.push(key);
+      const id = key.split('|')[0];
+      if (!s.plan.shortlist.includes(id)) s.plan.shortlist.push(id);
+    });
+    toast(`Added to your six (${state.plan.choices.length} of 6)`);
+  },
+  removeChoice(key) {
+    update(s => { s.plan.choices = s.plan.choices.filter(k => k !== key); });
+    toast('Removed from your six');
+  },
+  moveChoice(key, delta) {
+    update(s => {
+      const i = s.plan.choices.indexOf(key);
+      const j = i + delta;
+      if (i < 0 || j < 0 || j >= s.plan.choices.length) return;
+      [s.plan.choices[i], s.plan.choices[j]] = [s.plan.choices[j], s.plan.choices[i]];
+    });
+  },
+  toggleShortlist(id) {
+    const on = state.plan.shortlist.includes(id);
+    update(s => {
+      s.plan.shortlist = on ? s.plan.shortlist.filter(x => x !== id) : [...s.plan.shortlist, id];
+      if (on) s.plan.choices = s.plan.choices.filter(k => !k.startsWith(`${id}|`));
+    });
+    toast(on ? 'Removed from your shortlist' : 'Saved to your shortlist');
+  },
+
+  travelFor(id) { return ctx.travel.data[id] || null; },
+
+  /** Work out travel times from home: Google for the nearest schools, straight-line for the rest. */
+  async refreshTravel(force = false) {
+    const home = state.profile.home;
+    const mode = state.profile.mode_travel;
+    const key = homeKey(home, mode) + `|${maps.mapsStatus() === 'none' ? 'plain' : 'g'}`;
+    if (!home) { ctx.travel = { key: '', data: {}, status: 'idle', google: false }; return; }
+    if (!force && ctx.travel.key === key && ctx.travel.status !== 'error') return;
+    ctx.travel = { key, data: {}, status: 'working', google: false };
+    const all = ctx.data.schools;
+    const straight = await maps.travelTimes(home, all, mode, () => {}, { google: false });
+    ctx.travel.data = { ...straight };
+    notify();
+    if (maps.mapsStatus() === 'none') { ctx.travel.status = 'done'; notify(); return; }
+    const keep = new Set([...state.plan.shortlist, ...state.plan.choices.map(k => k.split('|')[0])]);
+    const near = [...all].sort((a, b) => straight[a.id].km - straight[b.id].km).filter((s, i) => i < TRAVEL_GOOGLE_LIMIT || keep.has(s.id));
+    await maps.travelTimes(home, near, mode, partial => {
+      if (ctx.travel.key !== key) return;
+      Object.assign(ctx.travel.data, partial);
+      ctx.travel.google = Object.values(partial).some(t => t.src === 'google');
+      notify();
+    });
+    if (ctx.travel.key === key) { ctx.travel.status = 'done'; notify(); }
+  },
+};
+
+// ------------------------------------------------------------------ router
+
+const ROUTES = [
+  { re: /^$/, view: startView, nav: '' },
+  { re: /^setup(?:\/(\d))?$/, view: setupView, nav: 'setup' },
+  { re: /^explore$/, view: exploreView, nav: 'explore' },
+  { re: /^school\/([\w-]+)$/, view: schoolView, nav: 'explore' },
+  { re: /^plan$/, view: planView, nav: 'plan' },
+  { re: /^guide$/, view: guideView, nav: 'guide' },
+];
+
+let current = null;
+const main = () => document.getElementById('top');
+
+function route() {
+  const path = location.hash.replace(/^#\/?/, '');
+  const match = ROUTES.map(r => ({ r, m: path.match(r.re) })).find(x => x.m) || { r: ROUTES[0], m: [] };
+  current?.instance?.destroy?.();
+  // A fresh <main> for every view, so no view's listeners outlive it.
+  const old = main();
+  const el = old.cloneNode(false);
+  old.replaceWith(el);
+  el.className = `view view--${match.r.nav || 'start'}`;
+  const instance = match.r.view.mount(el, ctx, match.m.slice(1));
+  current = { r: match.r, instance };
+  renderNav(match.r.nav);
+  window.scrollTo(0, 0);
+  const h1 = el.querySelector('h1');
+  if (h1 && document.body.dataset.booted) { h1.setAttribute('tabindex', '-1'); h1.focus({ preventScroll: true }); }
+  document.body.dataset.booted = '1';
+  document.title = `${h1 ? h1.textContent.trim() + ' · ' : ''}S1 Compass`;
+}
+
+function notify() {
+  current?.instance?.update?.();
+  renderNav(current?.r.nav);
+}
+
+// ------------------------------------------------------------------ nav
+
+function renderNav(active) {
+  const st = ctx.student();
+  const n = state.plan.choices.length;
+  const cur = k => (k === active ? 'page' : null);
+  const links = [
+    ['explore', '#/explore', 'Schools'],
+    ['plan', '#/plan', 'My six'],
+    ['guide', '#/guide', 'How posting works'],
+  ];
+  document.getElementById('nav-links').innerHTML = String(html`${links.map(([k, href, label]) => html`
+    <li class="nav__item"><a class="nav__link" href="${href}" aria-current="${cur(k)}">${label}${k === 'plan' && n ? html` <span class="count">${n}</span>` : ''}</a></li>`)}`);
+  const profile = st.al
+    ? html`<a class="nav__link nav__profile" href="#/setup/1" aria-label="Edit my details: AL ${st.al}${st.pg ? `, posting group ${st.pg}` : ''}">${icon('user')}<span class="mono">AL ${st.al}${st.pg ? ` · PG${st.pg}` : ''}</span></a>`
+    : '';
+  const main = st.al
+    ? html`<a class="btn btn--primary" href="#/plan">My six${n ? ` · ${n}` : ''}</a>`
+    : html`<a class="btn btn--primary" href="#/setup/1">Start with my score</a>`;
+  document.getElementById('nav-actions').innerHTML = String(html`${profile}
+    <button class="icon-btn" type="button" data-open-settings aria-label="Map settings">${icon('gear')}</button>${main}`);
+  const tabs = [
+    ['explore', '#/explore', 'Schools', 'search'],
+    ['plan', '#/plan', n ? `My six · ${n}` : 'My six', 'list'],
+    ['guide', '#/guide', 'Guide', 'book'],
+    ['setup', '#/setup/1', st.al ? `AL ${st.al}` : 'Me', 'user'],
+  ];
+  document.getElementById('tabbar').innerHTML = String(html`${tabs.map(([k, href, label, ic]) => html`
+    <a class="tabbar__item" href="${href}" aria-current="${cur(k)}">${icon(ic)}<span>${label}</span></a>`)}`);
+  document.body.classList.toggle('has-tabbar', active !== '' && active !== 'setup');
+}
+
+// ------------------------------------------------------------------ settings
+
+function settings() {
+  const dlg = document.getElementById('settings');
+  const input = dlg.querySelector('#maps-key');
+  const status = dlg.querySelector('[data-key-status]');
+  const showStatus = () => {
+    const s = maps.mapsStatus();
+    status.textContent = {
+      none: 'No key yet. The app uses straight-line distances and opens routes in Google Maps.',
+      failed: 'Google Maps refused this key. Check that the APIs below are on and that this site is allowed.',
+      ready: 'Google Maps is on: travel times, routes and the street map.',
+      loading: 'Checking the key…',
+      idle: 'Key saved. It is checked when a map opens.',
+    }[s];
+  };
+  document.addEventListener('click', e => {
+    if (e.target.closest('[data-open-settings]')) {
+      input.value = maps.getKey();
+      showStatus();
+      dlg.showModal();
+    }
+  });
+  dlg.querySelector('[data-save-key]').addEventListener('click', e => {
+    e.preventDefault();
+    maps.setKey(input.value);
+    location.reload();
+  });
+  dlg.querySelector('[data-clear-key]').addEventListener('click', e => {
+    e.preventDefault();
+    maps.setKey('');
+    location.reload();
+  });
+  dlg.querySelector('[data-reset]').addEventListener('click', e => {
+    e.preventDefault();
+    if (confirm('Clear your score, home, interests and list from this browser?')) {
+      reset();
+      dlg.close();
+      location.hash = '#/';
+    }
+  });
+  dlg.querySelector('[data-close]').addEventListener('click', () => dlg.close());
+  maps.onMapsChange(() => { if (dlg.open) showStatus(); });
+}
+
+// ------------------------------------------------------------------ boot
+
+async function boot() {
+  const el = main();
+  try {
+    const res = await fetch('data/schools.json');
+    if (!res.ok) throw new Error(res.status);
+    ctx.data = await res.json();
+  } catch (e) {
+    el.innerHTML = String(html`<div class="wrap empty"><h1>The school list did not load</h1><p>Check your connection and reload the page.</p></div>`);
+    return;
+  }
+  for (const s of ctx.data.schools) ctx.byId.set(s.id, s);
+  ctx.weights = L.tagWeights(ctx.data.schools);
+  settings();
+  maps.onMapsChange(s => { if (s === 'failed') { ctx.travel.key = ''; ctx.refreshTravel(); } notify(); });
+  subscribe(() => notify());
+  window.addEventListener('hashchange', route);
+  route();
+  ctx.refreshTravel();
+}
+
+boot();
