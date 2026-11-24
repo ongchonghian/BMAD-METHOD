@@ -103,8 +103,10 @@ years), affiliation, IP and SEC options, the plan checks and the school-morning 
 | `js/plot.js` | The last-resort map: schools drawn on an outline of the island |
 | `js/mapview.js` | Picks Google, the open map or the plot, all with one controller shape |
 | `js/app.js` | Data loading, shared state, router, nav and settings |
+| `js/sound.js` | The background music: starts on the first tap or key press, mute button in the nav, remembered in this browser |
 | `js/views/` | Start, setup (five steps), schools, school, my six, guide |
 | `css/app.css` | App styles on top of the kit's tokens |
+| `assets/audio/` | "Watch Me Glow", the background music (MP3, 3 min 30 s, loops) |
 | `assets/` | taste-skill's `system.css`, motion layer and the `liquid-type` and `marquee-row` moments (MIT); MapLibre GL JS in `vendor/` (BSD-3-Clause); all unchanged |
 | `design/` | The brainstorming session behind the look: its memlog and HTML keepsake |
 

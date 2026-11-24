@@ -4,6 +4,7 @@ import * as maps from './maps.js';
 import * as onemap from './onemap.js';
 import { html, icon, toast } from './ui.js';
 import * as motion from '../assets/motion/motion.js';
+import * as sound from './sound.js';
 import * as startView from './views/start.js';
 import * as setupView from './views/setup.js';
 import * as exploreView from './views/explore.js';
@@ -239,10 +240,10 @@ function renderNav(active) {
     ? html`<a class="nav__link nav__profile" href="#/setup/1" aria-label="Edit my details: AL ${st.al}${st.pg ? `, posting group ${st.pg}` : ''}">${icon('user')}<span class="mono">AL ${st.al}${st.pg ? ` · PG${st.pg}` : ''}</span></a>`
     : '';
   const main = st.al
-    ? html`<a class="btn btn--primary" href="#/plan">My six${n ? ` · ${n}` : ''}</a>`
-    : html`<a class="btn btn--primary" href="#/setup/1">Start with my score</a>`;
+    ? html`<a class="btn btn--primary" href="#/plan">${n ? html`<span class="nav-long">My six · ${n}</span><span class="nav-short" aria-hidden="true">My six</span>` : 'My six'}</a>`
+    : html`<a class="btn btn--primary" href="#/setup/1"><span class="nav-long">Start with my score</span><span class="nav-short" aria-hidden="true">Start</span></a>`;
   document.getElementById('nav-actions').innerHTML = String(html`${profile}
-    <button class="icon-btn" type="button" data-open-settings aria-label="Map settings">${icon('gear')}</button>${main}`);
+    ${sound.button()}<button class="icon-btn" type="button" data-open-settings aria-label="Map settings">${icon('gear')}</button>${main}`);
   const tabs = [
     ['explore', '#/explore', 'Schools', 'search'],
     ['plan', '#/plan', n ? `My six · ${n}` : 'My six', 'list'],
@@ -325,6 +326,7 @@ async function boot() {
   for (const s of ctx.data.schools) ctx.byId.set(s.id, s);
   ctx.weights = L.tagWeights(ctx.data.schools);
   settings();
+  sound.init();
   // "Show safer schools": the list, filtered to schools whose past cut-offs were less stringent than the score
   document.addEventListener('click', e => {
     const b = e.target.closest('[data-next-action="safer"]');
