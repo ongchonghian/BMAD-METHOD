@@ -19,6 +19,41 @@ python3 -m http.server 8000
 
 Opening `index.html` from the file system does not work, because the app fetches `data/schools.json`.
 
+To run it the way it runs when hosted, use the Node server (Node 20+, no packages): `npm start`, then open
+http://localhost:8080. It serves only the app's files, compresses and caches them, and reads its settings from the
+environment (below).
+
+## Deploy on Railway
+
+The app runs as one Railway service from this repository. `server.mjs` serves the site, and when a OneMap account
+is set it also proxies OneMap at `/onemap` on the same address, so visitors get bus and train times without a
+token.
+
+1. In Railway, create a project, choose **Deploy from GitHub repo** and pick this repository.
+2. In the service's **Settings**:
+   - **Source:** set the branch to deploy, and set **Root Directory** to `/apps/s1-compass`.
+   - **Config-as-code:** set **Railway Config File** to `/apps/s1-compass/railway.json`. The config file does not
+     follow the root directory, so the full path is needed. It sets the start command, the `/healthz` health check,
+     and watch paths so changes elsewhere in the repository do not redeploy the app.
+3. In **Variables**, add any of these (all optional):
+
+   | Variable | What it does |
+   |---|---|
+   | `ONEMAP_EMAIL`, `ONEMAP_PASSWORD` | Your free OneMap account. Turns on the proxy and bus and train times on the open map |
+   | `GOOGLE_MAPS_API_KEY` | Google Maps for every visitor. Restrict the key to your domain in Google Cloud |
+   | `GOOGLE_MAP_ID` | Your Map ID from Google Cloud (the default `DEMO_MAP_ID` is for testing only) |
+   | `MAP_PROVIDER` | `auto` (default), `google` or `maplibre` |
+   | `RATE_PER_MINUTE` | OneMap requests a minute per visitor (default 120) |
+
+   They are written into `config.js` as it is served, so nothing secret goes into the repository. The OneMap
+   password stays on the server.
+4. In **Settings → Networking**, click **Generate Domain** for a `*.up.railway.app` address, or add your own
+   domain. Railway provides HTTPS, which the location button and Copy the list need.
+5. Each push to the chosen branch redeploys. Open `/healthz` to check the service is up.
+
+With the Railway CLI instead: from `apps/s1-compass`, run `railway up` and set the variables with
+`railway variable set KEY=value`.
+
 ## Maps
 
 The app has two map providers, chosen in `config.js` (`mapProvider`) or by each visitor in the app's map
@@ -42,7 +77,8 @@ island instead.
 
 OneMap's routing service needs a token, which lasts three days. Pick one way:
 
-1. **Proxy (recommended for a public site).** Run `scripts/onemap-proxy.mjs` (Node 18+, no packages) with your
+1. **Proxy (recommended for a public site).** On Railway or with `npm start`, set `ONEMAP_EMAIL` and
+   `ONEMAP_PASSWORD` and the server proxies OneMap itself (see above). On a static host, run `scripts/onemap-proxy.mjs` (Node 18+, no packages) with your
    OneMap account in `ONEMAP_EMAIL` and `ONEMAP_PASSWORD` and your site in `ALLOW_ORIGIN`, then set `oneMapBase`
    in `config.js` to the proxy's address. The login stays on the server, the token renews itself, and the proxy
    answers the browser's CORS checks. It forwards only routing and address search.
@@ -99,6 +135,8 @@ years), affiliation, IP and SEC options, the plan checks and the school-morning 
 | `js/maps.js` | Google Maps (places, travel times, routes, the map) and its fallbacks |
 | `js/maplibre.js` | The open map: MapLibre GL JS with OpenFreeMap tiles |
 | `js/onemap.js` | OneMap routing for the open map: requests, token, and parsing of the answer |
+| `server.mjs` | The hosting server: the app's files, compression and caching, settings from the environment, the OneMap proxy at `/onemap` |
+| `railway.json` | Railway build and deploy settings |
 | `scripts/onemap-proxy.mjs` | A small proxy that keeps the OneMap login on the server |
 | `js/plot.js` | The last-resort map: schools drawn on an outline of the island |
 | `js/mapview.js` | Picks Google, the open map or the plot, all with one controller shape |

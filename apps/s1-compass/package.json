@@ -1,1 +1,10 @@
-{ "type": "module", "private": true }
+{
+  "name": "s1-compass",
+  "type": "module",
+  "private": true,
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test tests/*.test.mjs"
+  }
+}
