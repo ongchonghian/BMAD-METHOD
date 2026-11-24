@@ -130,23 +130,29 @@ Built with the [taste-skill](https://github.com/ongchonghian/taste-skill) system
 buttons, fields, cards, nav, its motion layer (`motion.css`, `motion.js`), and its dealt look.
 
 - **Kind:** software (a web app for families). Dealt with `start.mjs deal --page software --trade saas`.
-- **Palette:** `cool-white-slate` (Frost and slate): off-white ground #f7f9fa, slate ink #1f3038, one teal
-  accent #0d7480 for the primary action, focus and state. It reads calm and official without copying any
-  ministry brand; the interface stays 90–95% neutral and colour carries meaning only (comparison bands).
-- **Type:** `mona`: Mona Sans for display and text, Geist Mono for scores and codes. Sentence case, 16px
-  minimum for reading text, labels 13px at 500.
-- **Radius:** `soft` (8/12/20). One button pair (primary filled, secondary outline), one card style, one link
-  look, one chip style.
-- **Band colours:** ahead teal, mixed amber, behind slate-rose, open blue, none grey; always with a word and
-  an icon shape, never colour alone.
+- **Palette:** re-dealt from the keepsake of the look-and-feel brainstorm: paper ground #f6f3ec, warm-white
+  cards #fffdf8, ink #13202d, night #0f1a26 for dark grounds, and the five MRT line colours (East-West green,
+  Downtown blue, Circle orange, North-South red, Thomson-East Coast brown). Every dark ground carries a fine grain.
+- **Type:** `mona`: Mona Sans condensed (75% width) at 800 for headings and scores, at normal width for
+  reading text; Geist Mono for codes and the "Next stop" announcements. Sentence case, 16px minimum for reading
+  text.
+- **Radius:** `soft` (8/12/20); buttons are pills with a 2px ink border and a hard 3px lip that presses down.
+  The primary button's lip takes the page's line colour.
+- **Band colours:** better green, close amber, stricter blue, own admission brown, no comparison grey; shown
+  as solid badges with a word and an icon shape.
 - **The line (art direction):** one Singapore MRT-line language runs through the whole flow, chosen in a
   BMad brainstorming session (`design/brainstorm-s1-compass-look-2026-11-24/`): the setup steps are stations
   with "Next stop", every school card carries a line strip in its band colour, the school page shows "You and
   this school" as three stops, and My six is "Your line", six stations that draw themselves once when complete.
   A "Next stop" card on the start page, the list and My six offers the one best next action.
-- **Dealt by the kit (start page):** the effect `grain-gradient` behind the product window in the hero frame,
-  the moments `liquid-type` ("Six choices. One plan." on the dark band) and `marquee-row` (the towns), one count
-  (147 schools). Numerals for scores and counts use Mona Sans at a wider stretch.
+- **Screens:** the start page is a poster frame (an orange, red and green gradient on night, with grain) holding
+  the headline, a "Next stop" announcement, the example window and four facts. Each setup step rides its own line:
+  a header band in that colour with a station code (EW1, DT2, CC3, NS4, TE5) and the station line. The score lands
+  huge on a night card with the posting group on a ticket. "Next stop" cards are platform announcements on night.
+  My six is a night poster: a thick line in each choice's band colour through white station markers, printed as a
+  dashed ticket on white. The list, the school page and the guide stay on paper with the bolder strips and type.
+- **Dealt by the kit (start page):** the moments `liquid-type` ("Six choices. One plan." on the night band) and
+  `marquee-row` (the towns), one count (147 schools).
 - **Motion:** the start screen's hero enters once; views settle in on a change of page; the score's digits roll
   in once and the posting-group ticket stamps; buttons step and press; linked cards lift 2px; nothing moves on
   scroll except the dealt moments; everything rests under reduced motion.

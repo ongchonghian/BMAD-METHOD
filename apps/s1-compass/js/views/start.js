@@ -32,43 +32,46 @@ export function mount(el, ctx) {
     : html`<a class="btn btn--primary" href="${started ? next.href : '#/setup/1'}">${started ? next.label : 'Start with my score'}${arrow}</a>`;
 
   el.innerHTML = String(html`
-  <section class="hero hero--split" data-enter aria-labelledby="hero-h">
+  <section class="hero hero--pf" data-enter aria-labelledby="hero-h">
     <div class="wrap">
-      <div class="hero-text grid hero-split">
-        <div class="hero-copy span-6">
-          ${started
-            ? html`<p class="hero-notice">Welcome back · <strong>AL ${st.al}</strong>${st.pg ? ` · Posting Group ${st.pg}` : ''} · ${chosen} of 6 chosen</p>`
-            : html`<p class="hero-notice">For Primary 6 students choosing schools for <strong>${d.planningIntakeYear}</strong></p>`}
-          <h1 id="hero-h">Plan your six secondary school choices</h1>
-          <p class="t-lead">${started
-            ? `Next stop: ${next.title.toLowerCase()}. ${next.text}`
-            : 'Start from your PSLE score. See how it compares with each school’s 2024 and 2025 cut-offs, how far each school is from home, and what you could do there. Then line up your six.'}</p>
-          <div class="btn-row">
-            ${primary}
-            ${started ? html`<a class="btn btn--secondary" href="#/plan">My six</a>` : html`<a class="btn btn--secondary" href="#/explore">Browse all schools</a>`}
+      <div class="pf ground-inverse">
+        <div class="pf__grid">
+          <div class="pf__copy">
+            <p class="sign"><span class="code">S1</span><span class="kicker">${started
+              ? html`Welcome back · AL ${st.al}${st.pg ? ` · Posting Group ${st.pg}` : ''} · ${chosen} of 6 chosen`
+              : `Primary 6 · Secondary 1 in ${d.planningIntakeYear}`}</span></p>
+            <h1 id="hero-h">Plan your six secondary school choices</h1>
+            <p class="lede">${started
+              ? next.text
+              : 'Start from your PSLE score. See how it compares with each school’s 2024 and 2025 cut-offs, how far each school is from home, and what you could do there. Then line up your six.'}</p>
+            <div class="btn-row">
+              ${primary}
+              ${started ? html`<a class="btn btn--secondary" href="#/plan">My six</a>` : html`<a class="btn btn--secondary" href="#/explore">Browse all schools</a>`}
+            </div>
+            <p class="announce"><span>Next stop: ${started ? next.title : 'Your score'}</span></p>
           </div>
-          <dl class="hero-facts">
-            <div><dt>Schools</dt><dd data-m-count>${d.schools.length}</dd></div>
-            <div><dt>Towns</dt><dd>${townCount}</dd></div>
-            <div><dt>Choices you can list</dt><dd>Up to 6</dd></div>
-          </dl>
-        </div>
-        <div class="hero-visual hero-stage span-6 start-7">
-          <div class="hero-stage__fx" data-fx="grain-gradient" data-fx-seed="2027" data-fx-params='{"speed":0.35,"calm":0.35,"calmX":0.5,"calmY":0.55,"tint":0.65}' aria-hidden="true"></div>
-          <div class="app-window" role="img" aria-label="Example: a student with AL 14 who lives in Tampines sees nearby schools marked by how their score compares with past cut-offs">
-            <div class="app-window__bar"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="t-label">Example · AL 14 · Posting Group 3 · home in Tampines</span></div>
-            <div class="app-window__body">
-              <div class="app-window__map">${raw(plotSvg(points, EXAMPLE.home, ''))}</div>
-              <ul class="app-window__list">
-                ${rows.map(r => html`<li data-band="${r.cmp.band}">
-                  <span class="aw-name">${r.s.name}</span>
-                  <span class="aw-meta">${schoolTags(r.s)}</span>
-                  <span class="aw-row">${bandBadge(r.cmp, { short: true })}<span class="meta-chip">${icon('pin')}${r.km.toFixed(1)} km</span></span>
-                </li>`)}
-              </ul>
+          <div class="pf__visual">
+            <div class="app-window ground-base" role="img" aria-label="Example: a student with AL 14 who lives in Tampines sees nearby schools marked by how their score compares with past cut-offs">
+              <div class="app-window__bar"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="t-label">Example · AL 14 · Posting Group 3 · home in Tampines</span></div>
+              <div class="app-window__body">
+                <div class="app-window__map">${raw(plotSvg(points, EXAMPLE.home, ''))}</div>
+                <ul class="app-window__list">
+                  ${rows.map(r => html`<li data-band="${r.cmp.band}">
+                    <span class="aw-name">${r.s.name}</span>
+                    <span class="aw-meta">${schoolTags(r.s)}</span>
+                    <span class="aw-row">${bandBadge(r.cmp, { short: true })}<span class="meta-chip">${icon('pin')}${r.km.toFixed(1)} km</span></span>
+                  </li>`)}
+                </ul>
+              </div>
             </div>
           </div>
         </div>
+        <dl class="pf-facts">
+          <div class="fact"><dt>Schools</dt><dd data-m-count>${d.schools.length}</dd></div>
+          <div class="fact"><dt>Towns</dt><dd>${townCount}</dd></div>
+          <div class="fact"><dt>Years of cut-offs</dt><dd>2</dd></div>
+          <div class="fact"><dt>Choices you list</dt><dd>6</dd></div>
+        </dl>
       </div>
     </div>
   </section>
@@ -84,8 +87,8 @@ export function mount(el, ctx) {
             : 'Search your address or postal code. See how far each school is, and the way there in Google Maps.'],
           ['What you enjoy', 'Pick the things you like doing. Every school shows the programmes and CCAs that match.'],
           ['Your six', 'Line up six schools in the order you want them. The app checks the rules and the balance for you.'],
-        ].map(([t, p], i) => html`<li class="line-steps__stop">
-          <span class="line-steps__stn mono" aria-hidden="true">${i + 1}</span>
+        ].map(([t, p], i) => html`<li class="line-steps__stop" style="--lc: var(--${['ew', 'ns', 'te', 'cc'][i]})">
+          <span class="line-steps__stn" aria-hidden="true">${i + 1}</span>
           <h3>${t}</h3>
           <p>${p}</p>
         </li>`)}
@@ -107,7 +110,7 @@ export function mount(el, ctx) {
     <div class="wrap">
       <h2 id="towns-h">${d.schools.length} schools across ${townCount} towns. <span class="muted">Every one has its 2024 and 2025 cut-offs, its programmes and its CCAs.</span></h2>
       <div data-moment="marquee-row" data-moment-opts='{"speed": 30}' class="towns">
-        <ul class="mo-mq__track">${towns.map(t => html`<li>${t}</li>`)}</ul>
+        <ul class="mo-mq__track">${towns.map((t, i) => html`<li style="--lc: var(--${['ew', 'ns', 'cc', 'dt', 'te'][i % 5]})">${t}</li>`)}</ul>
       </div>
       <div class="honest">
         <h3 class="t-card">What the numbers mean</h3>
@@ -122,13 +125,11 @@ export function mount(el, ctx) {
 
   ${footer(d)}`);
 
-  // The dealt effect (the hero frame's ground) and the two dealt moments, mounted for this view only
-  let fx = null, moments = null;
-  import('../../assets/effects/fx.js').then(m => { if (!el.isConnected) return; fx = m.default; fx.mountAll(el); }).catch(e => console.warn('fx', e));
+  // The two dealt moments, mounted for this view only
+  let moments = null;
   import('../../assets/moments/moments.js').then(m => { if (!el.isConnected) return; moments = m; m.mountAll(el); }).catch(e => console.warn('moments', e));
   return {
     destroy() {
-      try { fx?.unmountAll(el); } catch { /* gone */ }
       try { moments?.unmountAll(el); } catch { /* gone */ }
     },
   };

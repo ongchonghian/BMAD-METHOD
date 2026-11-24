@@ -50,14 +50,15 @@ export function mount(el, ctx) {
     if (complete && !drawn()) { draw = true; markDrawn(); }
     if (!complete) clearDrawn();
     let nx = st.al ? ctx.nextStep() : null;
-    if (nx?.href === '#/plan') nx = nx.id === 'done' ? { ...nx, title: 'Your line is complete', text: 'Six stops, in your order. Print it or copy it to talk it over at home.', href: null, action: null } : { ...nx, href: null };
+    // When the line is complete the poster says so; the next card only points somewhere else
+    if (nx?.href === '#/plan') nx = nx.id === 'done' ? null : { ...nx, href: null };
 
     el.innerHTML = String(html`
     <div class="page page--plan">
       <div class="wrap">
         <header class="plan-head">
           <div>
-            <p class="t-label plan-head__kicker">Your line${st.al ? ` · AL ${st.al}${st.pg ? ` · Posting Group ${st.pg}` : ''}` : ''}</p>
+            <p class="t-label plan-head__kicker">The last stop</p>
             <h1>My six choices</h1>
             <p class="t-lead measure">Put first the school you want most. Posting reads your six in this order, so order them by wish, not by cut-off.</p>
           </div>
@@ -72,6 +73,13 @@ export function mount(el, ctx) {
 
         <div class="plan-grid">
           <div class="plan-main">
+            <section class="line-poster ground-inverse ${complete ? 'is-complete' : ''}" aria-labelledby="poster-h">
+              <header class="line-poster__head">
+                <p class="sign"><span class="code">S1</span><span class="kicker">${st.al ? `AL ${st.al}${st.pg ? ` · Posting Group ${st.pg}` : ''}` : 'Your line'}</span></p>
+                <h2 id="poster-h" class="line-poster__title">${complete ? 'Your line is complete' : `Your line · ${choices.length} of ${MAX_CHOICES} stops`}</h2>
+                ${complete ? html`<p class="line-poster__sub">Six stops, in your order. Print it or copy it to talk it over at home.</p>` : ''}
+                <ul class="line-poster__key">${['ahead', 'mixed', 'behind'].map(b => html`<li data-band="${b}"><i></i>${BAND[b].short}</li>`)}</ul>
+              </header>
             <ol class="choices ${complete ? 'is-complete' : ''} ${draw ? 'is-drawing' : ''}" aria-label="Your choices in order">
               ${choices.map((c, i) => {
                 const t = ctx.travelFor(c.school.id);
@@ -94,6 +102,7 @@ export function mount(el, ctx) {
               })}
               ${Array.from({ length: Math.max(0, MAX_CHOICES - choices.length) }, (_, i) => html`<li class="choice choice--empty" style="--k:${choices.length + i}"><span class="choice__n mono" aria-hidden="true">${choices.length + i + 1}</span><span class="muted">Empty. ${i === 0 ? html`<a class="inline-link" href="#/explore">Find a school</a>` : ''}</span></li>`)}
             </ol>
+            </section>
             ${keys.length > choices.length ? html`<p class="note note--warn">${icon('warn')}<span>Some choices no longer fit your posting group and are hidden. <button class="inline-link" type="button" data-prune>Remove them</button></span></p>` : ''}
 
             <section class="block" aria-labelledby="short-h">

@@ -94,7 +94,7 @@ years), affiliation, IP and SEC options, the plan checks and the school-morning 
 
 | Path | What it holds |
 |---|---|
-| `index.html` | The shell: nav, settings dialog, the kit's stylesheets and the dealt palette |
+| `index.html` | The shell: nav, settings dialog, the kit's stylesheets and the palette |
 | `js/logic.js` | Every admission and comparison rule, as pure functions |
 | `js/maps.js` | Google Maps (places, travel times, routes, the map) and its fallbacks |
 | `js/maplibre.js` | The open map: MapLibre GL JS with OpenFreeMap tiles |
@@ -105,7 +105,7 @@ years), affiliation, IP and SEC options, the plan checks and the school-morning 
 | `js/app.js` | Data loading, shared state, router, nav and settings |
 | `js/views/` | Start, setup (five steps), schools, school, my six, guide |
 | `css/app.css` | App styles on top of the kit's tokens |
-| `assets/` | taste-skill's `system.css`, motion layer, the dealt `grain-gradient` effect and the `liquid-type` and `marquee-row` moments (MIT); MapLibre GL JS in `vendor/` (BSD-3-Clause); all unchanged |
+| `assets/` | taste-skill's `system.css`, motion layer and the `liquid-type` and `marquee-row` moments (MIT); MapLibre GL JS in `vendor/` (BSD-3-Clause); all unchanged |
 | `design/` | The brainstorming session behind the look: its memlog and HTML keepsake |
 
 ## Limits

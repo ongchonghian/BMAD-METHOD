@@ -94,7 +94,7 @@ export function interestIcon(id) {
 /** The one best thing to do next, as a card: a title, a reason and one action. */
 export function nextCard(step, { compact = false } = {}) {
   if (!step) return '';
-  return html`<aside class="next-card ${compact ? 'next-card--compact' : ''}" aria-label="Next step">
+  return html`<aside class="next-card ground-inverse ${compact ? 'next-card--compact' : ''}" aria-label="Next step">
     <span class="next-card__stop" aria-hidden="true"><i></i></span>
     <div class="next-card__text">
       <span class="t-label next-card__label">Next stop</span>

@@ -5,6 +5,8 @@ import * as maps from '../maps.js';
 import { openMap } from '../mapview.js';
 
 const STEPS = ['Your score', 'About you', 'Posting group', 'Your home', 'What you enjoy'];
+// Each step rides its own MRT line: the colour of its header band and its station code
+const LINES = ['ew', 'dt', 'cc', 'ns', 'te'];
 const SUBJECTS = [['el', 'English'], ['math', 'Mathematics'], ['sci', 'Science'], ['mt', 'Mother Tongue']];
 const LIMITS = [30, 45, 60, 75, 0];
 const HCL = [['D', 'Distinction'], ['M', 'Merit'], ['P', 'Pass'], ['none', 'Did not take it or did not pass'], ['unknown', 'Not sure']];
@@ -23,18 +25,17 @@ export function mount(el, ctx, [n]) {
     const fresh = Boolean(st.al && st.al !== lastAl);
     lastAl = st.al;
     el.innerHTML = String(html`
-    <div class="page page--setup">
+    <div class="page page--setup" style="--lc: var(--${LINES[step - 1]}); --lc-ink: var(--${LINES[step - 1]}-ink); --lc-on: var(--${LINES[step - 1]}-on)">
       <div class="wrap setup">
-        <nav class="setup__progress" aria-label="Your steps">
-          <ol class="stations">${STEPS.map((name, i) => html`<li class="stations__stop ${i + 1 < step ? 'is-done' : i + 1 === step ? 'is-here' : ''}"${i + 1 === step ? raw(' aria-current="step"') : ''}>
+        <nav class="setup__progress line-band" aria-label="Your steps">
+          <p class="line-band__now"><span class="code">${LINES[step - 1].toUpperCase()}${step}</span><span>Stop ${step} of ${STEPS.length} · ${STEPS[step - 1]}</span></p>
+          <ol class="stations">${STEPS.map((name, i) => html`<li class="stations__stop ${i + 1 < step ? 'is-done' : i + 1 === step ? 'is-here' : ''}" style="--sc: var(--${LINES[i]})"${i + 1 === step ? raw(' aria-current="step"') : ''}>
             ${i + 1 < step
               ? html`<a class="stations__dot" href="#/setup/${i + 1}"><span class="sr-only">Back to ${name}</span></a>`
               : html`<span class="stations__dot" aria-hidden="true"></span>`}
             <span class="stations__name">${name}</span>
           </li>`)}</ol>
-          <p class="stations__next">Step ${step} of ${STEPS.length}${step < STEPS.length
-            ? html` · Next stop: <strong>${STEPS[step]}</strong>`
-            : html` · Next stop: <strong>your schools</strong>`}</p>
+          <p class="stations__next announce"><span>Next stop: ${step < STEPS.length ? STEPS[step] : 'your schools'}</span></p>
         </nav>
         <form class="setup__form" novalidate>
           ${[stepScore, stepAbout, stepGroup, stepHome, stepInterests][step - 1](p, st, ctx, { fresh })}
