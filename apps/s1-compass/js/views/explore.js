@@ -1,4 +1,4 @@
-import { html, tf, icon, bandBadge, copPair, travelChip, interestChips, schoolTags } from '../ui.js';
+import { html, tf, icon, bandBadge, copPair, travelChip, interestChips, schoolTags, nextCard } from '../ui.js';
 import { BAND, interestMatches, interestScore, isEligible, PG_INFO } from '../logic.js';
 import * as maps from '../maps.js';
 import { openMap, matches } from '../mapview.js';
@@ -154,6 +154,7 @@ export function mount(el, ctx) {
           ${st.al && st.pg ? html`<p class="t-small muted explainer">${icon('info')}<span>Comparisons use the ${PG_INFO[st.pg].name} cut-offs from the 2024 and 2025 postings. They describe past years, not your chances.</span></p>` : ''}
           ${list.some(it => it.opts.some(o => o.option.prog === 'IP')) ? html`<p class="t-small muted explainer">${icon('info')}<span><strong>IP</strong> is the Integrated Programme: six years to the A-Level or IB, without the O-Level. It is a separate choice from the same school’s usual course.</span></p>` : ''}
           ${list.some(it => it.opts.some(o => [2024, 2025].some(y => o.cmp.years[y].rec?.copHcl))) ? html`<p class="t-small muted explainer">${icon('info')}<span>A letter after a cut-off, like <span class="mono">8 (M)</span>, is the Higher Chinese grade (Distinction, Merit or Pass) that decided ties at that SAP school.</span></p>` : ''}
+          ${st.al && !better ? nextCard(stepHere(), { compact: true }) : ''}
           ${list.length
             ? html`<ul class="results">${list.map(it => row(it, ctx))}</ul>`
             : html`<div class="empty"><h2 class="t-h3">No school matches all of these filters</h2><p>Try fewer filters, or a longer trip.</p><button class="btn btn--secondary" type="button" data-clear-filters>Clear filters</button></div>`}
@@ -175,6 +176,14 @@ export function mount(el, ctx) {
     return list;
   }
 
+  /** The next step, as it reads from this page: no button that leads back here. */
+  function stepHere() {
+    const nx = ctx.nextStep();
+    if (nx.id === 'safer' && f().band === 'ahead') return { ...nx, action: null, href: null, title: nx.id === 'safer' ? 'These are the safer choices' : nx.title, text: 'Their past cut-offs were less stringent than your score in both years. Tap Add on two or three you like.' };
+    if (nx.href === '#/explore') return ctx.state.plan.choices.length ? { ...nx, href: '#/plan', label: 'Open my six' } : { ...nx, href: null };
+    return nx;
+  }
+
   function travelNote(ctx, p, travel) {
     if (!p.home) return '';
     if (travel.status === 'working') return html`<p class="t-small muted explainer" role="status">${icon('clock')}<span>Working out travel times from ${p.home.label}…</span></p>`;
@@ -188,7 +197,7 @@ export function mount(el, ctx) {
     const s = it.s;
     const choices = new Set(ctx.state.plan.choices);
     const mode = ctx.state.profile.mode_travel;
-    return html`<li class="result card ${s.id === selected ? 'is-selected' : ''}" data-id="${s.id}">
+    return html`<li class="result card ${s.id === selected ? 'is-selected' : ''}" data-id="${s.id}" data-band="${it.kind === 'option' ? it.band : it.kind === 'special' ? 'special' : 'none'}">
       <div class="result__head">
         <h2 class="result__name"><a href="#/school/${s.id}" data-fk="open-${s.id}">${s.name}</a></h2>
         <button class="star" type="button" aria-pressed="${tf(it.saved)}" data-save="${s.id}" data-fk="save-${s.id}" aria-label="${it.saved ? 'Remove' : 'Save'} ${s.name} ${it.saved ? 'from' : 'to'} shortlist">${icon('star')}</button>

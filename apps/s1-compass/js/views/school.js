@@ -61,6 +61,7 @@ export function mount(el, ctx, [id]) {
           </div>
         </header>
 
+        ${youAnd(s, st, opts, matches, t, choices, genderOk && sapOk)}
         <div class="school-grid">
           <div class="school-main">
             <section class="block" id="score" aria-labelledby="score-h">
@@ -125,6 +126,46 @@ export function mount(el, ctx, [id]) {
       </div>
       ${footer(ctx.data)}
     </div>`);
+  }
+
+  // ---------------------------------------------------------------- you and this school
+
+  /** The student and this school in three stops, and what adding it would do to their six. */
+  function youAnd(s, st, opts, matches, t, choices, eligible) {
+    if (!st.al || !s.ordinary || !opts.length || !eligible) return '';
+    const o = opts.find(x => x.option.prog === 'SEC') || opts[0];
+    const band = o.cmp.band;
+    const scoreLine = {
+      ahead: `Your AL ${st.al} was better than both past cut-offs`,
+      mixed: `Your AL ${st.al} was close to its past cut-offs`,
+      behind: `Its past cut-offs were stricter than your AL ${st.al}`,
+      none: 'No past cut-off to compare with your score',
+    }[band];
+    const trip = t ? (t.min != null ? `${formatMinutes(t.min)} from home` : `${t.km} km from home`) : 'Add your home to see the trip';
+    const likes = matches.length ? `${matches.length} of your interests` : 'None of your interests listed';
+    const inSix = choices.indexOf(o.option.key);
+    const current = ctx.planChoices();
+    let impact;
+    if (inSix >= 0) impact = `It is choice #${inSix + 1} in your six.`;
+    else if (current.length >= 6) impact = 'Your six is full. Remove one to add this school.';
+    else {
+      const ahead = current.filter(c => c.cmp.band === 'ahead').length;
+      const dist = x => ctx.travelFor(x.school.id);
+      const here = t?.min ?? t?.km;
+      const nearest = here != null && current.length && current.every(c => (dist(c)?.min ?? dist(c)?.km ?? Infinity) > here);
+      if (band === 'ahead' && ahead < 2) impact = `Adding it gives you ${ahead ? 'a second' : 'a first'} choice with a less stringent past cut-off.`;
+      else if (nearest) impact = 'It would be the nearest school in your six.';
+      else if (band === 'behind' && current.length && current.every(c => c.cmp.band === 'behind')) impact = 'Every school in your six would then be a stretch. Add a safer one too.';
+      else impact = `It would be choice #${current.length + 1} in your six. You can reorder them any time.`;
+    }
+    return html`<section class="you-and" data-band="${band}" aria-label="You and ${s.name}">
+      <ol class="you-and__stops">
+        <li><span class="you-and__stn" aria-hidden="true"></span><span class="t-label">Your score</span><strong>${scoreLine}</strong></li>
+        <li><span class="you-and__stn" aria-hidden="true"></span><span class="t-label">The trip</span><strong>${trip}</strong></li>
+        <li><span class="you-and__stn" aria-hidden="true"></span><span class="t-label">What you enjoy</span><strong>${likes}</strong></li>
+      </ol>
+      <p class="you-and__impact">${icon('info')}<span>${impact}</span></p>
+    </section>`;
   }
 
   // ---------------------------------------------------------------- score

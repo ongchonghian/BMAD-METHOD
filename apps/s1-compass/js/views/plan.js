@@ -1,4 +1,4 @@
-import { html, icon, bandBadge, copPair, travelChip, interestChips, schoolTags, toast, announce } from '../ui.js';
+import { html, icon, bandBadge, copPair, travelChip, interestChips, schoolTags, toast, announce, nextCard } from '../ui.js';
 import { checkPlan, MAX_CHOICES, PG_INFO, BAND, copText, interestMatches, formatMinutes, INTEREST_LABEL } from '../logic.js';
 import { footer } from './start.js';
 
@@ -26,6 +26,11 @@ async function copyText(text) {
   }
 }
 
+const DRAWN = 's1compass.lineDrawn';
+const drawn = () => { try { return sessionStorage.getItem(DRAWN) === '1'; } catch { return true; } };
+const markDrawn = () => { try { sessionStorage.setItem(DRAWN, '1'); } catch { /* nothing to keep */ } };
+const clearDrawn = () => { try { sessionStorage.removeItem(DRAWN); } catch { /* nothing to keep */ } };
+
 export function mount(el, ctx) {
   const compare = new Set();
 
@@ -39,14 +44,22 @@ export function mount(el, ctx) {
     const shortlist = ctx.state.plan.shortlist.map(id => ctx.byId.get(id)).filter(Boolean);
     const mode = ctx.state.profile.mode_travel;
     for (const id of [...compare]) if (!shortlist.some(s => s.id === id)) compare.delete(id);
+    const complete = choices.length === MAX_CHOICES && !checks.some(c => c.level === 'error');
+    // The line draws itself once, the first time it is complete in this visit
+    let draw = false;
+    if (complete && !drawn()) { draw = true; markDrawn(); }
+    if (!complete) clearDrawn();
+    let nx = st.al ? ctx.nextStep() : null;
+    if (nx?.href === '#/plan') nx = nx.id === 'done' ? { ...nx, title: 'Your line is complete', text: 'Six stops, in your order. Print it or copy it to talk it over at home.', href: null, action: null } : { ...nx, href: null };
 
     el.innerHTML = String(html`
     <div class="page page--plan">
       <div class="wrap">
         <header class="plan-head">
           <div>
+            <p class="t-label plan-head__kicker">Your line${st.al ? ` · AL ${st.al}${st.pg ? ` · Posting Group ${st.pg}` : ''}` : ''}</p>
             <h1>My six choices</h1>
-            <p class="t-lead measure">Put them in the order you most want to go. Posting looks at your choices in this order, so put first the school you want most, not the one with the easiest cut-off.</p>
+            <p class="t-lead measure">Put first the school you want most. Posting reads your six in this order, so order them by wish, not by cut-off.</p>
           </div>
           ${choices.length ? html`<div class="btn-row plan-head__actions">
             <button class="btn btn--secondary" type="button" data-copy>${icon('copy')}Copy the list</button>
@@ -54,15 +67,16 @@ export function mount(el, ctx) {
           </div>` : ''}
         </header>
         ${!st.al ? html`<div class="note">${icon('info')}<p>Add your score first, so each choice can be compared with past cut-offs. <a class="inline-link" href="#/setup/1">Start with my score</a></p></div>` : ''}
+        ${nx ? nextCard(nx, { compact: true }) : ''}
         <p class="print-only">${st.al ? `AL ${st.al} · ${st.pg ? PG_INFO[st.pg].name : ''}` : ''}${ctx.state.profile.home ? ` · Home: ${ctx.state.profile.home.label}` : ''}</p>
 
         <div class="plan-grid">
           <div class="plan-main">
-            <ol class="choices" aria-label="Your choices in order">
+            <ol class="choices ${complete ? 'is-complete' : ''} ${draw ? 'is-drawing' : ''}" aria-label="Your choices in order">
               ${choices.map((c, i) => {
                 const t = ctx.travelFor(c.school.id);
                 const note = ctx.state.plan.notes[c.school.id];
-                return html`<li class="choice card m-nolift" data-key="${c.option.key}">
+                return html`<li class="choice card m-nolift" data-key="${c.option.key}" data-band="${c.cmp.band}" style="--k:${i}">
                   <span class="choice__n mono" aria-hidden="true">${i + 1}</span>
                   <div class="choice__body">
                     <h2 class="choice__name"><a href="#/school/${c.school.id}">${c.school.name}</a>${c.option.prog === 'IP' ? html` <span class="opt__prog">IP</span>` : ''}</h2>
@@ -78,7 +92,7 @@ export function mount(el, ctx) {
                   </div>
                 </li>`;
               })}
-              ${Array.from({ length: Math.max(0, MAX_CHOICES - choices.length) }, (_, i) => html`<li class="choice choice--empty"><span class="choice__n mono" aria-hidden="true">${choices.length + i + 1}</span><span class="muted">Empty. ${i === 0 ? html`<a class="inline-link" href="#/explore">Find a school</a>` : ''}</span></li>`)}
+              ${Array.from({ length: Math.max(0, MAX_CHOICES - choices.length) }, (_, i) => html`<li class="choice choice--empty" style="--k:${choices.length + i}"><span class="choice__n mono" aria-hidden="true">${choices.length + i + 1}</span><span class="muted">Empty. ${i === 0 ? html`<a class="inline-link" href="#/explore">Find a school</a>` : ''}</span></li>`)}
             </ol>
             ${keys.length > choices.length ? html`<p class="note note--warn">${icon('warn')}<span>Some choices no longer fit your posting group and are hidden. <button class="inline-link" type="button" data-prune>Remove them</button></span></p>` : ''}
 
@@ -107,6 +121,7 @@ export function mount(el, ctx) {
           </div>
 
           <aside class="plan-aside">
+            ${choices.length ? glance(choices, st) : ''}
             <div class="card checks-card m-nolift" aria-labelledby="checks-h">
               <h2 id="checks-h" class="t-card">Checks</h2>
               <div class="meter" role="img" aria-label="${choices.length} of 6 choices: ${['ahead', 'mixed', 'behind', 'none'].map(b => `${choices.filter(c => c.cmp.band === b).length} ${BAND[b].short.toLowerCase()}`).join(', ')}">
@@ -132,6 +147,23 @@ export function mount(el, ctx) {
       </div>
       ${footer(ctx.data)}
     </div>`);
+  }
+
+  /** Your six at a glance: three numbers a parent asks first. */
+  function glance(choices, st) {
+    const safer = choices.filter(c => c.cmp.band === 'ahead').length;
+    const trips = choices.map(c => ctx.travelFor(c.school.id)).filter(Boolean);
+    const timed = trips.filter(t => t.min != null);
+    const near = timed.length ? Math.min(...timed.map(t => t.min)) : trips.length ? Math.min(...trips.map(t => t.km)) : null;
+    const liked = new Set(choices.flatMap(c => interestMatches(c.school, st.interests))).size;
+    return html`<div class="card glance m-nolift">
+      <h2 class="t-card">Your six at a glance</h2>
+      <dl class="glance__row">
+        <div><dt>Safer choices</dt><dd><span class="glance__n">${safer}</span><span class="muted"> of ${choices.length}</span></dd></div>
+        <div><dt>${timed.length ? 'Shortest trip' : 'Nearest'}</dt><dd><span class="glance__n">${near == null ? '–' : timed.length ? near : near.toFixed(1)}</span><span class="muted"> ${near == null ? '' : timed.length ? 'min' : 'km'}</span></dd></div>
+        <div><dt>Interests covered</dt><dd><span class="glance__n">${liked}</span><span class="muted"> of ${st.interests.length}</span></dd></div>
+      </dl>
+    </div>`;
   }
 
   function compareTable(list, ctx, st) {

@@ -1,4 +1,4 @@
-import { html, tf, icon, arrow } from '../ui.js';
+import { html, raw, tf, icon, arrow, interestIcon } from '../ui.js';
 import { INTERESTS, PG_INFO, totalAL, HCL_PRIORITY_MAX_AL } from '../logic.js';
 import { plotSvg } from '../plot.js';
 import * as maps from '../maps.js';
@@ -15,19 +15,29 @@ export function mount(el, ctx, [n]) {
   let searchTimer = null;
   let results = [];
   let active = -1;
+  let lastAl = ctx.student().al;
 
   function render() {
     const p = ctx.state.profile;
     const st = ctx.student();
+    const fresh = Boolean(st.al && st.al !== lastAl);
+    lastAl = st.al;
     el.innerHTML = String(html`
     <div class="page page--setup">
       <div class="wrap setup">
-        <div class="setup__progress">
-          <p class="t-label muted">Step ${step} of ${STEPS.length} · ${STEPS[step - 1]}</p>
-          <ol class="progress" aria-hidden="true">${STEPS.map((_, i) => html`<li class="${i < step ? 'is-done' : ''}"></li>`)}</ol>
-        </div>
+        <nav class="setup__progress" aria-label="Your steps">
+          <ol class="stations">${STEPS.map((name, i) => html`<li class="stations__stop ${i + 1 < step ? 'is-done' : i + 1 === step ? 'is-here' : ''}"${i + 1 === step ? raw(' aria-current="step"') : ''}>
+            ${i + 1 < step
+              ? html`<a class="stations__dot" href="#/setup/${i + 1}"><span class="sr-only">Back to ${name}</span></a>`
+              : html`<span class="stations__dot" aria-hidden="true"></span>`}
+            <span class="stations__name">${name}</span>
+          </li>`)}</ol>
+          <p class="stations__next">Step ${step} of ${STEPS.length}${step < STEPS.length
+            ? html` · Next stop: <strong>${STEPS[step]}</strong>`
+            : html` · Next stop: <strong>your schools</strong>`}</p>
+        </nav>
         <form class="setup__form" novalidate>
-          ${[stepScore, stepAbout, stepGroup, stepHome, stepInterests][step - 1](p, st, ctx)}
+          ${[stepScore, stepAbout, stepGroup, stepHome, stepInterests][step - 1](p, st, ctx, { fresh })}
           <div class="setup__actions">
             <a class="btn btn--secondary" href="${step === 1 ? '#/' : `#/setup/${step - 1}`}">Back</a>
             ${step === 4 && !p.home ? html`<a class="btn btn--secondary" href="#/setup/5">Skip for now</a>` : ''}
@@ -219,7 +229,7 @@ export function mount(el, ctx, [n]) {
 
 const stepError = html`<p class="form-error" data-step-error role="alert" tabindex="-1" hidden></p>`;
 
-function stepScore(p, st) {
+function stepScore(p, st, ctx, { fresh } = {}) {
   const groups = st.groups;
   return html`
     <h1>What did you get for PSLE?</h1>
@@ -243,12 +253,17 @@ function stepScore(p, st) {
           <label for="total">Your PSLE score (4 to 30)</label>
           <input id="total" name="total" type="number" inputmode="numeric" min="4" max="30" value="${p.total ?? ''}">
         </div>`}
-    <div class="score-card" aria-live="polite">
-      <span class="t-label muted">Your PSLE score</span>
-      <span class="score-card__n mono">${st.al ?? '–'}</span>
-      <span class="score-card__g">${groups.valid
-        ? groups.groups.length ? `Posting Group ${groups.groups.join(' or ')}` : 'See the next step'
-        : 'Pick all four subjects'}</span>
+    <div class="score-card ${st.al ? 'is-set' : ''} ${fresh ? 'is-fresh' : ''}" aria-live="polite">
+      <span class="t-label score-card__label">Your PSLE score</span>
+      <span class="score-card__n" aria-label="${st.al ? `AL ${st.al}` : 'Not yet'}">${st.al
+        ? String(st.al).split('').map((c, i) => html`<span class="score-card__digit" style="--i:${i}">${c}</span>`)
+        : '–'}</span>
+      <span class="ticket ${groups.valid && groups.groups.length ? '' : 'is-blank'}">
+        <span class="ticket__label t-label">Posting group</span>
+        <span class="ticket__value">${groups.valid
+          ? groups.groups.length ? groups.groups.join(' or ') : 'See the next step'
+          : 'Pick all four subjects'}</span>
+      </span>
     </div>
     ${stepError}`;
 }
@@ -281,8 +296,9 @@ function stepGroup(p, st, ctx) {
       <p class="measure">With AL ${st.al} you can choose. <strong>One group applies to all six choices.</strong></p>
       <fieldset class="choice-cards">
         <legend class="sr-only">Choose your posting group</legend>
-        ${g.groups.map(n => html`<label class="choice-card">
+        ${g.groups.map(n => html`<label class="choice-card choice-card--group">
           <input type="radio" name="pg" value="${n}" ${st.pg === n ? 'checked' : ''}>
+          <span class="choice-card__num" aria-hidden="true">${n}</span>
           <span class="choice-card__title">${PG_INFO[n].name}</span>
           <span>${PG_INFO[n].text}</span>
           ${ipLine(n, pv)}
@@ -390,7 +406,7 @@ function stepInterests(p) {
     <p class="t-lead measure">Pick as many as you like. We show the programmes and CCAs at each school that match. Nothing here limits which schools you see.</p>
     <fieldset class="interests">
       <legend class="sr-only">Things you enjoy</legend>
-      ${INTERESTS.map(i => html`<label class="chip chip--lg"><input type="checkbox" name="interest" value="${i.id}" ${p.interests.includes(i.id) ? 'checked' : ''}><span>${i.label}</span></label>`)}
+      ${INTERESTS.map(i => html`<label class="chip chip--lg chip--interest"><input type="checkbox" name="interest" value="${i.id}" ${p.interests.includes(i.id) ? 'checked' : ''}><span>${interestIcon(i.id)}${i.label}</span></label>`)}
     </fieldset>
     ${stepError}`;
 }

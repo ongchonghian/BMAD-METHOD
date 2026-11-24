@@ -3,6 +3,7 @@ import { state, update, subscribe, reset, homeKey } from './store.js';
 import * as maps from './maps.js';
 import * as onemap from './onemap.js';
 import { html, icon, toast } from './ui.js';
+import * as motion from '../assets/motion/motion.js';
 import * as startView from './views/start.js';
 import * as setupView from './views/setup.js';
 import * as exploreView from './views/explore.js';
@@ -90,6 +91,29 @@ export const ctx = {
     const pv = ctx.preview();
     const other = st.groups.groups.find(g => g !== st.pg);
     return pv[st.pg].ahead === 0 && pv[other]?.ahead > 0 ? { pg: other, ahead: pv[other].ahead } : null;
+  },
+
+  /**
+   * The one best next step for this student, so the app is always a step ahead:
+   * score, about you, group, home, save schools, a safer choice, fill the six, fix a rule, then done.
+   */
+  nextStep() {
+    const st = ctx.student();
+    const p = state.profile;
+    if (!st.al) return { id: 'score', title: 'Start with your PSLE score', text: 'Four taps, and you see how it compares with every school.', href: '#/setup/1', label: 'Enter my score' };
+    if (p.chinese == null) return { id: 'about', title: 'Tell us a little about you', text: 'It decides which schools you can choose.', href: '#/setup/2', label: 'Carry on' };
+    if (st.groups.choose && !st.pg) return { id: 'group', title: 'Choose your posting group', text: `With AL ${st.al} you can pick one of two.`, href: '#/setup/3', label: 'Choose my group' };
+    if (!p.home) return { id: 'home', title: 'Add your home', text: 'See how far each school is from you.', href: '#/setup/4', label: 'Add my home' };
+    const choices = ctx.planChoices();
+    const n = choices.length;
+    const ahead = choices.filter(c => c.cmp.band === 'ahead').length;
+    const open = ctx.preview()[st.pg]?.ahead ?? 0;
+    if (!state.plan.shortlist.length && !n) return { id: 'save', title: 'Save the schools you like', text: 'Tap the star on any school. Saved schools wait for you in My six.', href: '#/explore', label: 'Browse schools' };
+    if (ahead < 2 && open > ahead) return { id: 'safer', title: ahead ? 'Add one more safer choice' : 'Add two safer choices', text: `${open} schools had cut-offs less stringent than AL ${st.al}. MOE suggests two or three in your six.`, action: 'safer', label: 'Show safer schools' };
+    if (n < L.MAX_CHOICES) return { id: 'more', title: `Add ${L.MAX_CHOICES - n} more to your six`, text: n ? 'Using all six helps, as long as you would be happy at each school.' : 'Add schools from the list or from a school page.', href: '#/explore', label: 'Find schools' };
+    const errors = L.checkPlan(choices, st, ctx.data.affiliations).some(i => i.level === 'error');
+    if (errors) return { id: 'fix', title: 'Fix one thing in your six', text: 'One of your choices breaks a posting rule.', href: '#/plan', label: 'See the checks' };
+    return { id: 'done', title: 'Your six is ready', text: 'Put them in the order you want them, then print the list to talk it over.', href: '#/plan', label: 'Open my six' };
   },
 
   switchGroup(pg) {
@@ -180,11 +204,13 @@ function route() {
   const old = main();
   const el = old.cloneNode(false);
   old.replaceWith(el);
-  el.className = `view view--${match.r.nav || 'start'}`;
+  el.className = `view view--${match.r.nav || 'start'} view-in`;
   const instance = match.r.view.mount(el, ctx, match.m.slice(1));
   current = { r: match.r, instance };
   renderNav(match.r.nav);
   window.scrollTo(0, 0);
+  // the motion layer runs once per page: give it each new view (the hero entrance, a count, tab indicators)
+  try { motion.refresh(); } catch (e) { console.warn('motion', e); }
   const h1 = el.querySelector('h1');
   if (h1 && document.body.dataset.booted) { h1.setAttribute('tabindex', '-1'); h1.focus({ preventScroll: true }); }
   document.body.dataset.booted = '1';
@@ -299,6 +325,13 @@ async function boot() {
   for (const s of ctx.data.schools) ctx.byId.set(s.id, s);
   ctx.weights = L.tagWeights(ctx.data.schools);
   settings();
+  // "Show safer schools": the list, filtered to schools whose past cut-offs were less stringent than the score
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-next-action="safer"]');
+    if (!b) return;
+    update(s => { s.ui.filters = { ...s.ui.filters, band: 'ahead', q: '', withinLimit: false, interestsOnly: false }; s.ui.sort = 'travel'; }, { silent: true });
+    if (location.hash === '#/explore') route(); else location.hash = '#/explore';
+  });
   maps.onMapsChange(s => { if (s === 'failed') { ctx.travel.key = ''; ctx.refreshTravel(); } notify(); });
   subscribe(() => notify());
   window.addEventListener('hashchange', route);

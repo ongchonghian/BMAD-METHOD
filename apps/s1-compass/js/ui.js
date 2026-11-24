@@ -66,6 +66,47 @@ const P = {
   dash: 'M10 3a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM6.5 10h7',
 };
 
+// One drawn icon per interest, on the same 20px grid and stroke as the interface icons.
+const INTEREST_P = {
+  robotics_and_making: 'M6 7.5h8a1.5 1.5 0 0 1 1.5 1.5v5a1.5 1.5 0 0 1-1.5 1.5H6A1.5 1.5 0 0 1 4.5 14V9A1.5 1.5 0 0 1 6 7.5zM10 7.5V4.5M8 11h.01M12 11h.01M8 13.5h4',
+  coding_and_computing: 'M7 6l-4 4 4 4M13 6l4 4-4 4M11 4.5l-2 11',
+  research_and_inquiry: 'M8 3.5h4M9 3.5V8l-4 7a1 1 0 0 0 .9 1.5h8.2a1 1 0 0 0 .9-1.5l-4-7V3.5M6.5 12.5h7',
+  environment_and_sustainability: 'M4.5 15.5c0-6 4-10.5 11-11 0 7-4.5 11-11 11zM4.5 15.5l6-6',
+  sports: 'M10 3a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM5 5c3 2 3 8 0 10M15 5c-3 2-3 8 0 10',
+  outdoor_activities: 'M2.5 16l5-8 3 4.5 2-3 5 6.5zM13 5.5h.01',
+  music: 'M8 15V5l8-1.5V13M8 15a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM16 13a2 2 0 1 1-4 0 2 2 0 0 1 4 0z',
+  drama_dance_and_performance: 'M10 3l1.6 4.4L16 9l-4.4 1.6L10 15l-1.6-4.4L4 9l4.4-1.6z',
+  arts_and_design: 'M13.5 3.5l3 3-7 7-3-3zM6.5 10.5c-2 0-3 1.5-3 3.5 0 1-.5 2-1 2.5 2.5.5 6-.5 6-3.5',
+  communication_and_media: 'M10 3a2.5 2.5 0 0 0-2.5 2.5v4a2.5 2.5 0 0 0 5 0v-4A2.5 2.5 0 0 0 10 3zM5.5 9.5a4.5 4.5 0 0 0 9 0M10 14v3',
+  language_and_culture: 'M4 5h12v8H9l-3.5 3v-3H4zM7.5 8h5M7.5 10.5h3',
+  leadership: 'M5 17V3.5M5 4h9l-2 3 2 3H5',
+  community_service: 'M10 16s-6-3.6-6-8a3.2 3.2 0 0 1 6-1.6A3.2 3.2 0 0 1 16 8c0 4.4-6 8-6 8zM10 7.5v4M8 9.5h4',
+  global_exposure: 'M10 3a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM3 10h14M10 3c2 2 3 4.5 3 7s-1 5-3 7c-2-2-3-4.5-3-7s1-5 3-7z',
+  enterprise: 'M7.5 13.5a5 5 0 1 1 5 0V15h-5zM8 17h4',
+  vocational_and_work_experience: 'M12.5 3.5a3.5 3.5 0 0 0-3.3 4.6L4 13.3 6.7 16l5.2-5.2a3.5 3.5 0 0 0 4.6-3.3l-2 2-2.3-.5-.5-2.3z',
+  boarding: 'M3 15V6M3 11h14v4M17 11V9.5A2 2 0 0 0 15 7.5H9v3.5M6 9.5h.01',
+};
+
+export function interestIcon(id) {
+  return raw(`<svg class="i i--interest" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="${INTEREST_P[id] || P.heart}"/></svg>`);
+}
+
+/** The one best thing to do next, as a card: a title, a reason and one action. */
+export function nextCard(step, { compact = false } = {}) {
+  if (!step) return '';
+  return html`<aside class="next-card ${compact ? 'next-card--compact' : ''}" aria-label="Next step">
+    <span class="next-card__stop" aria-hidden="true"><i></i></span>
+    <div class="next-card__text">
+      <span class="t-label next-card__label">Next stop</span>
+      <strong class="next-card__title">${step.title}</strong>
+      ${step.text ? html`<span class="next-card__why">${step.text}</span>` : ''}
+    </div>
+    ${step.action
+      ? html`<button class="btn btn--primary btn--sm" type="button" data-next-action="${step.action}">${step.label}${arrow}</button>`
+      : step.href ? html`<a class="btn btn--primary btn--sm" href="${step.href}">${step.label}${arrow}</a>` : ''}
+  </aside>`;
+}
+
 export function icon(name, cls = '') {
   return raw(`<svg class="i ${cls}" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="${P[name]}"/></svg>`);
 }

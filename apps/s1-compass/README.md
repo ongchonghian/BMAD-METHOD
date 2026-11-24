@@ -105,7 +105,8 @@ years), affiliation, IP and SEC options, the plan checks and the school-morning 
 | `js/app.js` | Data loading, shared state, router, nav and settings |
 | `js/views/` | Start, setup (five steps), schools, school, my six, guide |
 | `css/app.css` | App styles on top of the kit's tokens |
-| `assets/` | taste-skill's `system.css` and motion layer (MIT), MapLibre GL JS in `vendor/` (BSD-3-Clause), all unchanged |
+| `assets/` | taste-skill's `system.css`, motion layer, the dealt `grain-gradient` effect and the `liquid-type` and `marquee-row` moments (MIT); MapLibre GL JS in `vendor/` (BSD-3-Clause); all unchanged |
+| `design/` | The brainstorming session behind the look: its memlog and HTML keepsake |
 
 ## Limits
 

@@ -139,8 +139,17 @@ buttons, fields, cards, nav, its motion layer (`motion.css`, `motion.js`), and i
   look, one chip style.
 - **Band colours:** ahead teal, mixed amber, behind slate-rose, open blue, none grey; always with a word and
   an icon shape, never colour alone.
-- **Motion:** the start screen's hero enters once; buttons step and press; linked cards lift 2px; nothing
-  moves on scroll; everything rests under reduced motion.
+- **The line (art direction):** one Singapore MRT-line language runs through the whole flow, chosen in a
+  BMad brainstorming session (`design/brainstorm-s1-compass-look-2026-11-24/`): the setup steps are stations
+  with "Next stop", every school card carries a line strip in its band colour, the school page shows "You and
+  this school" as three stops, and My six is "Your line", six stations that draw themselves once when complete.
+  A "Next stop" card on the start page, the list and My six offers the one best next action.
+- **Dealt by the kit (start page):** the effect `grain-gradient` behind the product window in the hero frame,
+  the moments `liquid-type` ("Six choices. One plan." on the dark band) and `marquee-row` (the towns), one count
+  (147 schools). Numerals for scores and counts use Mona Sans at a wider stretch.
+- **Motion:** the start screen's hero enters once; views settle in on a change of page; the score's digits roll
+  in once and the posting-group ticket stamps; buttons step and press; linked cards lift 2px; nothing moves on
+  scroll except the dealt moments; everything rests under reduced motion.
 - **Layout:** the kit's `.wrap` (1280, 80px gutters, 24 on a phone) and 12-column grid. Explore is a 5/7
   split (list/map) from 1024px; the school page is an 8/4 split with a sticky action card from 1024px.
 - **Map:** Google Maps when a key is set, otherwise MapLibre GL JS on OpenFreeMap's light Positron style, with
