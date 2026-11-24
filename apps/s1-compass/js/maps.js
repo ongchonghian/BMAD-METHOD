@@ -24,13 +24,33 @@ export function setKey(key) {
   } catch { /* nothing to keep */ }
 }
 
+const PROVIDER_STORE = 's1compass.mapProvider';
+
+/** 'auto' (Google when a key is set, else the open map), 'google' or 'maplibre'. */
+export function getProvider() {
+  try {
+    const own = localStorage.getItem(PROVIDER_STORE);
+    if (own) return own;
+  } catch { /* storage blocked */ }
+  return window.S1_CONFIG?.mapProvider || 'auto';
+}
+
+export function setProvider(v) {
+  try { localStorage.setItem(PROVIDER_STORE, v); } catch { /* nothing to keep */ }
+}
+
+/** Google Maps is used only when chosen (or automatic) and a key is set. Its results never go on another map. */
+export function usingGoogle() {
+  return getProvider() !== 'maplibre' && Boolean(getKey());
+}
+
 export function mapId() {
   return window.S1_CONFIG?.googleMapId || 'DEMO_MAP_ID';
 }
 
 /** 'ready' | 'none' (no key) | 'failed' (bad key or blocked) | 'loading' */
 export function mapsStatus() {
-  if (!getKey()) return 'none';
+  if (!usingGoogle()) return 'none';
   if (authFailed) return 'failed';
   if (window.google?.maps?.importLibrary && loading) return 'ready';
   return loading ? 'loading' : 'idle';
@@ -76,7 +96,7 @@ let session = null;
 export async function searchPlaces(input) {
   const q = input.trim();
   if (q.length < 2) return [];
-  if (getKey() && !authFailed) {
+  if (usingGoogle() && !authFailed) {
     try {
       await loadGoogle();
       const { AutocompleteSessionToken, AutocompleteSuggestion } = await google.maps.importLibrary('places');
@@ -150,7 +170,7 @@ export async function travelTimes(home, schools, mode = 'TRANSIT', onProgress = 
     onProgress(out);
     return out;
   };
-  if (!useGoogle || !getKey() || authFailed) return straight();
+  if (!useGoogle || !usingGoogle() || authFailed) return straight();
   try {
     await loadGoogle();
     const { DistanceMatrixService } = await google.maps.importLibrary('routes');
@@ -277,6 +297,7 @@ export async function createMap(el, { onSelect = () => {}, interactive = true } 
   };
 
   const api = {
+    kind: 'google',
     map,
     setHome(h) {
       if (home) home.map = null;
@@ -324,6 +345,7 @@ export async function createMap(el, { onSelect = () => {}, interactive = true } 
       renderer.setRouteIndex(index);
     },
     clearRoute() { if (renderer) { renderer.setMap(null); renderer = null; } },
+    showLine() {},
     destroy() {
       for (const m of markers.values()) m.map = null;
       markers.clear();

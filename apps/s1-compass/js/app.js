@@ -183,8 +183,9 @@ function settings() {
   const status = dlg.querySelector('[data-key-status]');
   const showStatus = () => {
     const s = maps.mapsStatus();
+    if (maps.getProvider() === 'maplibre') { status.textContent = 'The open map is on. A saved key is kept but not used.'; return; }
     status.textContent = {
-      none: 'No key yet. The app uses straight-line distances and opens routes in Google Maps.',
+      none: 'No key yet. The app uses the open map and straight-line distances, and opens routes in Google Maps.',
       failed: 'Google Maps refused this key. Check that the APIs below are on and that this site is allowed.',
       ready: 'Google Maps is on: travel times, routes and the street map.',
       loading: 'Checking the key…',
@@ -194,6 +195,8 @@ function settings() {
   document.addEventListener('click', e => {
     if (e.target.closest('[data-open-settings]')) {
       input.value = maps.getKey();
+      const p = dlg.querySelector(`input[name="provider"][value="${maps.getProvider()}"]`);
+      if (p) p.checked = true;
       showStatus();
       dlg.showModal();
     }
@@ -201,6 +204,7 @@ function settings() {
   dlg.querySelector('[data-save-key]').addEventListener('click', e => {
     e.preventDefault();
     maps.setKey(input.value);
+    maps.setProvider(dlg.querySelector('input[name="provider"]:checked')?.value || 'auto');
     location.reload();
   });
   dlg.querySelector('[data-clear-key]').addEventListener('click', e => {

@@ -55,7 +55,12 @@
 <dialog id="settings" class="dialog" aria-labelledby="settings-h">
   <form method="dialog" class="dialog__body">
     <h2 id="settings-h" class="t-h3">Map settings</h2>
-    <p>With a Google Maps key the app shows travel times by public transport, the route with each bus and train, and a street map. Without one it still works, with straight-line distances and routes that open in Google Maps.</p>
+    <fieldset class="field-group">
+      <legend>Which map</legend>
+      <label class="check"><input type="radio" name="provider" value="auto"><span><strong>Automatic.</strong> Google Maps when a key is saved, otherwise the open map.</span></label>
+      <label class="check"><input type="radio" name="provider" value="google"><span><strong>Google Maps.</strong> Travel times by bus and train, the route with each bus and train, and a street map. Needs a key.</span></label>
+      <label class="check"><input type="radio" name="provider" value="maplibre"><span><strong>Open map.</strong> MapLibre with OpenStreetMap data, no key. Distances are in a straight line, and routes open in Google Maps.</span></label>
+    </fieldset>
     <div class="field">
       <label for="maps-key">Google Maps API key</label>
       <input id="maps-key" name="key" type="text" autocomplete="off" spellcheck="false" inputmode="text">
@@ -71,7 +76,7 @@
       <p class="t-small muted">The key stays in this browser. A site owner can set one for everyone in <code>config.js</code>.</p>
     </details>
     <div class="btn-row">
-      <button class="btn btn--primary" type="submit" data-save-key>Save the key</button>
+      <button class="btn btn--primary" type="submit" data-save-key>Save map settings</button>
       <button class="btn btn--secondary" type="button" data-clear-key>Remove the key</button>
     </div>
     <hr>

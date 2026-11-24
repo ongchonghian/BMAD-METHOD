@@ -45,6 +45,7 @@ export function createPlot(el, { onSelect = () => {} } = {}) {
   let selected = null;
 
   return {
+    kind: 'plot',
     setHome(h) {
       home?.remove();
       home = null;
@@ -86,6 +87,7 @@ export function createPlot(el, { onSelect = () => {} } = {}) {
     },
     fit() {},
     showRoute() {},
+    showLine() {},
     clearRoute() {},
     destroy() { el.innerHTML = ''; },
   };

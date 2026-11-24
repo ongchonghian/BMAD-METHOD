@@ -19,10 +19,24 @@ python3 -m http.server 8000
 
 Opening `index.html` from the file system does not work, because the app fetches `data/schools.json`.
 
-## Google Maps
+## Maps
 
-Without a key the app still works: OneMap (Singapore's public map service) finds the home address, distances
-are straight-line, the map is a drawn plot of the island, and every route opens in Google Maps.
+The app has two map providers, chosen in `config.js` (`mapProvider`) or by each visitor in the app's map
+settings:
+
+- **Open map (MapLibre).** [MapLibre GL JS](https://maplibre.org/projects/gl-js/) 6.17.0, vendored in
+  `assets/vendor/maplibre-gl/`, draws OpenStreetMap data from [OpenFreeMap](https://openfreemap.org) with no key.
+  OneMap (Singapore's public map service) finds the home address, distances are straight-line (the school page
+  draws a dashed line), and every route opens in Google Maps. Any MapLibre style URL can replace the default in
+  `maplibreStyle`.
+- **Google Maps.** Needs a key; see below.
+
+`auto` (the default) uses Google Maps when a key is saved and the open map otherwise. Google's results (routes,
+travel times, place search) are only ever shown with a Google map, as its terms require, so the open map never
+mixes them in. If the open map's style cannot load (offline, blocked), the app draws a schematic plot of the
+island instead.
+
+## Google Maps
 
 With a key it adds travel times by public transport or car (arriving by 7:15 on the next school day), the
 route with each bus and train, and a street map.
@@ -64,11 +78,13 @@ years), affiliation, IP and SEC options, the plan checks and the school-morning 
 | `index.html` | The shell: nav, settings dialog, the kit's stylesheets and the dealt palette |
 | `js/logic.js` | Every admission and comparison rule, as pure functions |
 | `js/maps.js` | Google Maps (places, travel times, routes, the map) and its fallbacks |
-| `js/plot.js` | The keyless map: schools drawn on an outline of the island |
+| `js/maplibre.js` | The open map: MapLibre GL JS with OpenFreeMap tiles |
+| `js/plot.js` | The last-resort map: schools drawn on an outline of the island |
+| `js/mapview.js` | Picks Google, the open map or the plot, all with one controller shape |
 | `js/app.js` | Data loading, shared state, router, nav and settings |
 | `js/views/` | Start, setup (five steps), schools, school, my six, guide |
 | `css/app.css` | App styles on top of the kit's tokens |
-| `assets/` | taste-skill's `system.css` and motion layer, unchanged (MIT) |
+| `assets/` | taste-skill's `system.css` and motion layer (MIT), MapLibre GL JS in `vendor/` (BSD-3-Clause), all unchanged |
 
 ## Limits
 

@@ -1,7 +1,7 @@
 import { html, icon, bandBadge, travelChip, schoolTags, GENDER_LABEL } from '../ui.js';
 import { BAND, INTEREST_LABEL, PG_INFO, copText, interestMatches, ccaMatchesInterest, googleMapsDirUrl, formatMinutes, distanceKm, isGenderOk } from '../logic.js';
 import * as maps from '../maps.js';
-import { createPlot } from '../plot.js';
+import { openMap, matches } from '../mapview.js';
 import { footer } from './start.js';
 
 const ARRIVE = [[7, 0], [7, 15], [7, 30], [7, 45]];
@@ -23,7 +23,7 @@ export function mount(el, ctx, [id]) {
   }
   const routeState = { mode: ctx.state.profile.mode_travel === 'DRIVING' ? 'DRIVING' : 'TRANSIT', arrive: 1, result: null, idx: 0, error: null, loading: false };
   let map = null;
-  let mapKind = null;
+  let creating = null;
 
   function render() {
     const st = ctx.student();
@@ -227,7 +227,7 @@ export function mount(el, ctx, [id]) {
         </div>
         ${!mapsOn
           ? html`<p class="route__big"><span class="mono">${km} km</span> <span class="muted">in a straight line from ${p.home.label}</span></p>
-                 <p class="t-small muted measure">${maps.mapsStatus() === 'failed' ? 'Google Maps refused the key, so the route opens in Google Maps instead.' : html`Google Maps shows the full route. <button class="inline-link" type="button" data-open-settings>Add a key</button> to see it here with each bus and train.`}</p>`
+                 <p class="t-small muted measure">${maps.mapsStatus() === 'failed' ? 'Google Maps refused the key, so the route opens in Google Maps instead.' : html`The dashed line is the straight-line distance. Google Maps shows the real route. <button class="inline-link" type="button" data-open-settings>${maps.getKey() ? 'Switch to Google Maps' : 'Add a key'}</button> to see it here with each bus and train.`}</p>`
           : routeState.loading ? html`<p class="t-small muted" role="status">Planning the route…</p>`
           : routeState.error ? html`<p class="note note--warn">${icon('warn')}<span>${routeState.error}</span></p>`
           : r ? routeView(r) : ''}
@@ -284,22 +284,22 @@ export function mount(el, ctx, [id]) {
     const box = el.querySelector('[data-route-map]');
     if (!box) return;
     const home = ctx.state.profile.home;
-    const want = maps.mapsStatus() === 'none' || maps.mapsStatus() === 'failed' ? 'plot' : 'google';
-    if (!map || mapKind !== want || !box.childElementCount) {
+    if (creating) { await creating; return paintRouteMap(); }
+    if (!matches(map) || !box.childElementCount) {
       map?.destroy?.();
       map = null;
-      if (want === 'google') {
-        try { map = await maps.createMap(box, {}); mapKind = 'google'; } catch (e) { console.warn(e); }
-      }
-      if (!map) { map = createPlot(box, {}); mapKind = 'plot'; }
+      creating = openMap(box, {}).then(m => { map = m; }).finally(() => { creating = null; });
+      await creating;
     }
+    if (!map || !box.isConnected) return;
     map.setHome(home);
     map.setSchools([{ id: s.id, name: s.name, lat: s.lat, lng: s.lng, band: 'school' }]);
     map.select(s.id);
     const r = routeState.result;
-    if (mapKind === 'google' && r?.raw) map.showRoute(r.raw, routeState.idx);
+    if (map.kind === 'google' && r?.raw) map.showRoute(r.raw, routeState.idx);
     else {
       map.clearRoute();
+      if (home) map.showLine(home, s);
       map.fit(home ? [home, { lat: s.lat, lng: s.lng }] : [{ lat: s.lat, lng: s.lng }]);
     }
   }

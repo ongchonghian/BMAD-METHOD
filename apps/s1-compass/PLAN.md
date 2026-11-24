@@ -88,7 +88,8 @@ better. None of this is a chance of getting in, and the app says so where the ba
 - **Summary first, detail on demand.** The list row answers: can I, how far, what's there for me. The school page
   holds the rest.
 - **Travel is real.** Times are public transport on a school morning, arriving by 7:15, from Google Maps.
-  Without a Maps key the app still works: straight-line distance, and every route opens in Google Maps.
+  Without a Maps key the app still works on the open MapLibre map: straight-line distance, and every route
+  opens in Google Maps.
 - **Strategy, not sorting.** The six are ordered by preference. The app checks the balance and the rules and
   explains them; it never re-sorts the list by cut-off.
 - **Reachable for everyone.** Works by keyboard and screen reader; 44px targets; reduced motion respected;
@@ -133,9 +134,9 @@ buttons, fields, cards, nav, its motion layer (`motion.css`, `motion.js`), and i
   moves on scroll; everything rests under reduced motion.
 - **Layout:** the kit's `.wrap` (1280, 80px gutters, 24 on a phone) and 12-column grid. Explore is a 5/7
   split (list/map) from 1024px; the school page is an 8/4 split with a sticky action card from 1024px.
-- **Map:** Google Maps with a quiet custom style, markers coloured by band, the home marker in ink, the
-  route in the accent. Without a key: a drawn plot of every school's position on the island with home,
-  keeping the same marker language.
+- **Map:** Google Maps when a key is set, otherwise MapLibre GL JS on OpenFreeMap's light Positron style, with
+  the same markers on both: coloured by band, home in ink, the route (Google) or a dashed straight line
+  (MapLibre) in the accent. If neither can load, a drawn plot of the island keeps the same marker language.
 
 ## 4. Build
 
@@ -143,6 +144,7 @@ buttons, fields, cards, nav, its motion layer (`motion.css`, `motion.js`), and i
 - `scripts/build_data.py` turns the database Markdown into `data/schools.json` (compact, one file).
 - `js/logic.js` holds every rule above as pure functions, tested with `node --test`.
 - `js/maps.js` wraps Google Maps (Places autocomplete, Distance Matrix, Directions) with fallbacks to OneMap
-  search, straight-line distance and Google Maps links.
+  search, straight-line distance and Google Maps links. `js/maplibre.js` is the open map (MapLibre GL JS,
+  vendored); `js/mapview.js` picks between Google, MapLibre and the drawn plot.
 - The Maps key goes in `config.js` or in the app's settings (kept in the browser only). Enable Maps
   JavaScript API, Places API (New), Directions API and Distance Matrix API, restricted to your domain.

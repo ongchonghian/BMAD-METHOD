@@ -535,3 +535,17 @@ body { background: var(--bg); padding-bottom: var(--tabbar); }
 }
 .scale { padding: var(--s-6) 0 var(--s-6); }
 .scale__axis { top: auto; bottom: 0; }
+
+/* ------------------------------------------------------------------ the open map (MapLibre) */
+.mlpin { display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; background: none; cursor: pointer; }
+.mlpin:focus-visible { outline: 2px solid var(--action); outline-offset: 0; border-radius: 50%; }
+.mlpin .gpin { transition: transform 120ms var(--ease); }
+.mlpin:hover .gpin { transform: scale(1.25); }
+.mlpin .gpin.is-selected { transform: scale(1.5); }
+.map-canvas.maplibregl-map, .route__map.maplibregl-map, .home-card__map.maplibregl-map { padding: 0; }
+.home-card__map.maplibregl-map { min-height: 220px; }
+.maplibregl-ctrl-attrib { font: 12px/1.4 var(--font-text); }
+.maplibregl-ctrl-group { border-radius: var(--r-sm) !important; box-shadow: 0 0 0 1px var(--line) !important; }
+.maplibregl-cooperative-gesture-screen { font: 500 var(--t-small)/1.4 var(--font-text); }
+.map-canvas.maplibregl-map { position: absolute; inset: 0; }
+.map-shell, .route, .home-card { overflow: clip; }

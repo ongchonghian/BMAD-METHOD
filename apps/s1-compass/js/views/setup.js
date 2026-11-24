@@ -2,6 +2,7 @@ import { html, icon, arrow } from '../ui.js';
 import { INTERESTS, PG_INFO, totalAL, postingGroups } from '../logic.js';
 import { plotSvg } from '../plot.js';
 import * as maps from '../maps.js';
+import { openMap } from '../mapview.js';
 
 const STEPS = ['Your score', 'Posting group', 'About you', 'Your home', 'What you enjoy'];
 const SUBJECTS = [['el', 'English'], ['math', 'Mathematics'], ['sci', 'Science'], ['mt', 'Mother Tongue']];
@@ -41,17 +42,16 @@ export function mount(el, ctx, [n]) {
   async function mountHomeMap(home) {
     const box = el.querySelector('[data-home-map]');
     if (!box || !home) return;
-    if (maps.mapsStatus() !== 'none' && maps.mapsStatus() !== 'failed') {
-      try {
-        map?.destroy();
-        map = await maps.createMap(box, { interactive: false });
-        map.setHome(home);
-        map.map.setCenter(home);
-        map.map.setZoom(15);
-        return;
-      } catch (e) { console.warn(e); }
+    map?.destroy?.();
+    map = await openMap(box, { interactive: false });
+    if (!box.isConnected) return;
+    if (map.kind === 'plot') {
+      map = null;
+      box.innerHTML = plotSvg([], home, `Your home, ${home.label}, on a map of Singapore`);
+      return;
     }
-    box.innerHTML = plotSvg([], home, `Your home, ${home.label}, on a map of Singapore`);
+    map.setHome(home);
+    map.fit([home]);
   }
 
   // ---------------------------------------------------------------- events

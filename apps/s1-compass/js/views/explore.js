@@ -1,7 +1,7 @@
 import { html, icon, bandBadge, copPair, travelChip, interestChips, schoolTags } from '../ui.js';
 import { BAND, interestMatches, interestScore, isGenderOk, PG_INFO } from '../logic.js';
 import * as maps from '../maps.js';
-import { createPlot } from '../plot.js';
+import { openMap, matches } from '../mapview.js';
 import { footer } from './start.js';
 
 const SORTS = [['match', 'Your interests first'], ['travel', 'Shortest trip'], ['margin', 'Largest score margin'], ['name', 'A to Z']];
@@ -10,7 +10,7 @@ const TYPES = [['all', 'All types'], ['Government School', 'Government'], ['Gove
 export function mount(el, ctx) {
   let map = null;
   let selected = null;
-  let mapKind = null;
+  let creating = null;
 
   const ui = () => ctx.state.ui;
   const f = () => ctx.state.ui.filters;
@@ -150,7 +150,7 @@ export function mount(el, ctx) {
               ${p.home ? html`<span><i class="dot dot--home"></i>Home</span>` : ''}
             </div>
             <div class="map-card" data-map-card hidden></div>
-            ${mapKind === 'plot' || maps.mapsStatus() === 'none' ? html`<p class="map-note t-small">Schematic map. <button class="inline-link" type="button" data-open-settings>Add a Google Maps key</button> for streets and routes.</p>` : ''}
+            <p class="map-note t-small" data-map-note hidden>Schematic map: the street map could not load. <button class="inline-link" type="button" data-open-settings>Map settings</button></p>
           </div>
         </div>
       </div>
@@ -163,7 +163,7 @@ export function mount(el, ctx) {
     if (!p.home) return '';
     if (travel.status === 'working') return html`<p class="t-small muted explainer" role="status">${icon('clock')}<span>Working out travel times from ${p.home.label}…</span></p>`;
     if (travel.google) return html`<p class="t-small muted explainer">${icon('clock')}<span>Trips by ${p.mode_travel === 'DRIVING' ? 'car' : 'bus and train'} on a school morning, arriving by 7:15, for the nearest schools. Further schools show distance.</span></p>`;
-    return html`<p class="t-small muted explainer">${icon('pin')}<span>Distances are in a straight line from ${p.home.label}. ${maps.mapsStatus() === 'none' ? html`<button class="inline-link" type="button" data-open-settings>Add a Google Maps key</button> for travel times.` : ''}</span></p>`;
+    return html`<p class="t-small muted explainer">${icon('pin')}<span>Distances are in a straight line from ${p.home.label}. ${maps.mapsStatus() === 'none' ? html`<button class="inline-link" type="button" data-open-settings>${maps.getKey() ? 'Switch to Google Maps' : 'Add a Google Maps key'}</button> for travel times.` : ''}</span></p>`;
   }
 
   function row(it, ctx) {
@@ -194,21 +194,17 @@ export function mount(el, ctx) {
   // ---------------------------------------------------------------- map
 
   async function ensureMap() {
+    if (creating) return creating;
     const box = el.querySelector('[data-map]');
     if (!box) return;
-    const want = maps.mapsStatus() === 'none' || maps.mapsStatus() === 'failed' ? 'plot' : 'google';
-    if (map && mapKind === want && box.isConnected && box.childElementCount) return;
+    if (matches(map) && box.isConnected && box.childElementCount) return;
     map?.destroy?.();
     map = null;
-    if (want === 'google') {
-      try {
-        map = await maps.createMap(box, { onSelect: select });
-        mapKind = 'google';
-      } catch (e) {
-        console.warn('Google map failed; drawing the schematic map', e);
-      }
-    }
-    if (!map) { map = createPlot(box, { onSelect: select }); mapKind = 'plot'; }
+    creating = openMap(box, { onSelect: select }).then(m => { map = m; }).finally(() => { creating = null; });
+    await creating;
+    if (!box.isConnected) { map?.destroy?.(); map = null; return ensureMap(); }
+    const note = el.querySelector('[data-map-note]');
+    if (note) note.hidden = map?.kind !== 'plot';
   }
 
   let lastList = [];
@@ -219,7 +215,7 @@ export function mount(el, ctx) {
     map.setHome(home);
     map.setSchools(list.map(it => ({ id: it.s.id, name: it.s.name, lat: it.s.lat, lng: it.s.lng, band: it.kind === 'special' ? 'special' : it.kind === 'noscore' ? 'plain' : it.band })));
     if (selected) map.select(selected);
-    if (fit && mapKind === 'google') {
+    if (fit && map.kind !== 'plot') {
       const near = home ? list.filter(it => it.t?.min != null || it.t?.km < 8).slice(0, 25) : list;
       map.fit([...(home ? [home] : []), ...(near.length ? near : list).map(it => ({ lat: it.s.lat, lng: it.s.lng }))]);
     }
@@ -230,7 +226,7 @@ export function mount(el, ctx) {
     el.querySelectorAll('.result.is-selected').forEach(r => r.classList.remove('is-selected'));
     const r = el.querySelector(`.result[data-id="${id}"]`);
     r?.classList.add('is-selected');
-    if (r && ui().view !== 'map' && window.matchMedia('(min-width: 1024px)').matches) r.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    if (r && ui().view !== 'map' && window.matchMedia('(min-width: 1024px)').matches) r.scrollIntoView({ block: 'nearest' });
     map?.select(id);
     const it = lastList.find(x => x.s.id === id);
     const card = el.querySelector('[data-map-card]');
@@ -289,7 +285,7 @@ export function mount(el, ctx) {
     const caret = document.activeElement?.selectionStart;
     const detailsOpen = el.querySelector('details.more')?.open;
     const mapBox = el.querySelector('[data-map]');
-    const keepMap = mapBox && map ? mapBox : null;
+    const keepMap = mapBox && (map || creating) ? mapBox : null;
     const y = window.scrollY;
     lastList = render();
     if (keepMap) el.querySelector('[data-map]').replaceWith(keepMap);
