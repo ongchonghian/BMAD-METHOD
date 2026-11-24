@@ -207,7 +207,7 @@ export function mount(el, ctx, [id]) {
         })}
         <div class="scale__you" style="--x:${(Math.min(Math.max(st.al, 4), 30) - 4) / 26}"><span class="mono">You ${st.al}</span></div>
       </div>
-      <ul class="year-notes">${years.map(y => html`<li><strong class="mono">${y}</strong> ${yearText(o.cmp.years[y], st)}</li>`)}</ul>
+      <ul class="year-notes">${years.map(y => html`<li><strong class="mono">${y}</strong> ${yearText(o.cmp.years[y], st, y === years.find(z => o.cmp.years[z].result === 'tie'))}</li>`)}</ul>
       ${o.cmp.buffer != null ? html`<p class="t-small">${marginText(o.cmp.buffer)}</p>` : ''}
       ${o.cmp.affiliated ? html`<p class="note note--inline">${icon('info')}<span>You are compared with the cut-off for affiliated students. It applies only if this school is your first choice.</span></p>` : ''}
     </div>`;
@@ -224,11 +224,11 @@ export function mount(el, ctx, [id]) {
     return `Your score AL ${st.al}. ${parts.join('. ')}. ${BAND[o.cmp.band].label}.`;
   }
 
-  function yearText(y, st) {
+  function yearText(y, st, explainTie = true) {
     const r = y.rec;
     switch (y.result) {
       case 'better': return y.hclDecided ? `Your score equals the cut-off (${copText(r)}), and your Higher Chinese grade comes first.` : `Cut-off ${copText(r)}. Your ${st.al} was ${r.cop - st.al} better.`;
-      case 'tie': return `Cut-off ${copText(r)}, the same as your score. In a tie, Singapore citizens come first, then students who put this school higher in their list, then a computer ballot. So where you put it in your six matters.${y.hclUnknown ? ' Your Higher Chinese grade could decide it: add it in your details.' : ''}`;
+      case 'tie': return `Cut-off ${copText(r)}, the same as your score.${explainTie ? ` In a tie, Singapore citizens come first, then students who put this school higher in their list, then a computer ballot. So where you put it in your six matters.${y.hclUnknown ? ' Your Higher Chinese grade could decide it: add it in your details.' : ''}` : ''}`;
       case 'worse': return y.hclDecided ? `Your score equals the cut-off (${copText(r)}), but students with a better Higher Chinese grade came first.` : `Cut-off ${copText(r)}, ${st.al - r.cop} stricter than your score.`;
       case 'open': return `Places were left after posting (${copText(r)}), so students who chose it in this group were posted.`;
       case 'none_posted': return 'No students were posted in this group that year.';

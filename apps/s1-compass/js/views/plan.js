@@ -52,6 +52,7 @@ export function mount(el, ctx) {
     let nx = st.al ? ctx.nextStep() : null;
     // When the line is complete the poster says so; the next card only points somewhere else
     if (nx?.href === '#/plan') nx = nx.id === 'done' ? null : { ...nx, href: null };
+    if (nx?.id === 'more') nx = { ...nx, text: null }; // the Checks card gives the reason
 
     el.innerHTML = String(html`
     <div class="page page--plan">

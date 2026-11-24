@@ -100,7 +100,7 @@ export function mount(el, ctx) {
     <div class="wrap">
       <div data-moment="liquid-type" class="statement">
         <h2 id="statement-h" class="mo-lt__type">Six choices. One plan.</h2>
-        <p class="t-lead measure">Know which schools your score reached in the last two years, how far each one is from home, and what you would do there. Then put them in an order you can explain.</p>
+        <p class="t-lead measure">Put your six choices in an order you can explain.</p>
         <div class="btn-row">${primary}</div>
       </div>
     </div>
@@ -108,7 +108,7 @@ export function mount(el, ctx) {
 
   <section class="section start-towns" aria-labelledby="towns-h">
     <div class="wrap">
-      <h2 id="towns-h">${d.schools.length} schools across ${townCount} towns. <span class="muted">Every one has its 2024 and 2025 cut-offs, its programmes and its CCAs.</span></h2>
+      <h2 id="towns-h">${d.schools.length} schools across ${townCount} towns. <span class="muted">Each shows its programmes, its CCAs and any 2024 and 2025 cut-offs MOE published.</span></h2>
       <div data-moment="marquee-row" data-moment-opts='{"speed": 30}' class="towns">
         <ul class="mo-mq__track">${towns.map((t, i) => html`<li style="--lc: var(--${['ew', 'ns', 'cc', 'dt', 'te'][i % 5]})">${t}</li>`)}</ul>
       </div>
